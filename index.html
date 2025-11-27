@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>創世紀 2048</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 音效區 -->
+    <audio id="bg-music" loop>
+        <source src="audio/bgm.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-click">
+        <source src="audio/click.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- 最外層縮放器 -->
+    <div id="game-scale-wrapper">
+        <!-- 核心遊戲機：固定 1386x640 -->
+        <div id="game-container">
+            
+            <!-- [重要] 全域 UI (右上角) -->
+            <div id="global-icons" class="lobby-icons">
+                <button id="btn-open-achievement" class="icon-btn hover-effect">
+                    <img src="images/01_lobby/achieve.png">
+                </button>
+                <button id="btn-open-help" class="icon-btn hover-effect">
+                    <img src="images/01_lobby/help.png">
+                </button>
+                <button id="btn-toggle-sound" class="icon-btn hover-effect">
+                    <img id="img-sound" src="images/01_lobby/btn_sound_on.png">
+                </button>
+            </div>
+
+            <!-- 1. 大廳 -->
+            <div id="start-screen" class="screen active">
+                <div class="full-bg" style="background-image: url('images/01_lobby/logo_bg.png');"></div>
+                <div class="lobby-logo">
+                    <img src="images/01_lobby/logoanim.png" alt="Logo">
+                </div>
+                <div class="lobby-buttons">
+                    <button id="btn-endless" class="img-btn hover-effect">
+                        <img src="images/01_lobby/btn_start.png">
+                    </button>
+                    <button id="btn-normal" class="img-btn hover-effect">
+                        <img src="images/01_lobby/btn_challenge.png">
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 遊戲中 -->
+            <div id="game-screen" class="screen">
+                <div class="full-bg" style="background-image: url('images/04_game/game_bg.jpg');"></div>
+                <div class="game-layout-inner">
+                    <div class="playfield-area">
+                        <div class="playfield-bg">
+                            <!-- 加上 id 方便 JS 做拖動特效 -->
+                            <div class="grid-container" id="grid-container"></div>
+                        </div>
+                    </div>
+                    <div class="sidebar-area">
+                        <div class="god-container">
+                            <img src="images/04_game/mission.png" id="god-character">
+                        </div>
+                        <div class="info-group">
+                            <div class="stat-box" style="background-image: url('images/04_game/action_step.png');">
+                                <span id="moves-display">∞</span>
+                            </div>
+                            <div class="stat-box" style="background-image: url('images/04_game/score.png');">
+                                <span id="score-display">0</span>
+                            </div>
+                        </div>
+                        <!-- 補齊三個按鈕 -->
+                        <div class="controls-area">
+                            <button class="control-btn hover-effect" id="btn-back-home">
+                                <img src="images/04_game/menu.png">
+                            </button>
+                            <button class="control-btn hover-effect" id="btn-game-sound">
+                                <img id="img-game-sound" src="images/01_lobby/btn_sound_on.png">
+                            </button>
+                            <button class="control-btn hover-effect" id="btn-game-help">
+                                <img src="images/01_lobby/help.png">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 成就彈窗 -->
+            <div id="modal-achievement" class="modal-overlay hidden">
+                <div class="popup-container" style="width: 817px; height: 556px;">
+                    <img src="images/02_achievement/rank_bg.png" class="popup-bg">
+                    
+                    <button id="btn-close-achievement" class="close-btn hover-effect">
+                        <img src="images/02_achievement/btn_close.png">
+                    </button>
+
+                    <div class="achievement-list">
+                        <!-- 成就 1 -->
+                        <div class="ach-item completed">
+                            <div class="ach-col-icon"><img src="images/03_evolution/n2.png"></div>
+                            <div class="ach-col-title">黏糊糊的開始</div>
+                            <div class="ach-col-desc">把一鍋熱湯變成了單細胞。<br>小心別把它喝掉了！</div>
+                            <div class="ach-col-status"><img src="images/02_achievement/ach_finish_img.png"></div>
+                        </div>
+                        <!-- 成就 2 -->
+                        <div class="ach-item">
+                            <div class="ach-col-icon"><img src="images/03_evolution/n64.png"></div>
+                            <div class="ach-col-title">隕石磁鐵</div>
+                            <div class="ach-col-desc">演化出恐龍。<br>希望能撐過下一次流星雨。</div>
+                            <div class="ach-col-status"><img src="images/02_achievement/ach_img.png"></div>
+                        </div>
+                        <!-- 成就 3 -->
+                        <div class="ach-item">
+                            <div class="ach-col-icon"><img src="images/03_evolution/n1024.png"></div>
+                            <div class="ach-col-title">終於穿褲子了</div>
+                            <div class="ach-col-desc">演化出原始人。<br>雖然只有一塊布，但也是進步。</div>
+                            <div class="ach-col-status"><img src="images/02_achievement/ach_img.png"></div>
+                        </div>
+                        <!-- 成就 4 -->
+                        <div class="ach-item">
+                            <div class="ach-col-icon"><img src="images/03_evolution/n32768.png"></div>
+                            <div class="ach-col-title">電池充飽沒？</div>
+                            <div class="ach-col-desc">成為生化人。<br>現在你有 50% 的機率會生鏽。</div>
+                            <div class="ach-col-status"><img src="images/02_achievement/ach_img.png"></div>
+                        </div>
+                        <!-- 成就 5 -->
+                        <div class="ach-item">
+                            <div class="ach-col-icon"><img src="images/03_evolution/n131072.png"></div>
+                            <div class="ach-col-title">老闆好！</div>
+                            <div class="ach-col-desc">達到演化的頂點。<br>恭喜！你可以去創造自己的宇宙了。</div>
+                            <div class="ach-col-status"><img src="images/02_achievement/ach_img.png"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 演化圖鑑 -->
+            <div id="modal-help" class="modal-overlay hidden">
+                <div class="book-container">
+                    <img src="images/03_evolution/ach_img.png" class="book-bg">
+                    <div class="page-left"><div id="evo-grid-left" class="book-grid-layout"></div></div>
+                    <div class="page-right"><div id="evo-grid-right" class="book-grid-layout"></div></div>
+                </div>
+            </div>
+
+            <!-- 5. 遊戲結束彈窗 -->
+            <div id="modal-gameover" class="modal-overlay hidden">
+                <div class="overlay-dimmer"></div> 
+                <div class="modal-content-small">
+                    <div id="modal-bg-layer" class="modal-bg-layer"></div>
+                    <div class="modal-btn-group">
+                        <button id="btn-modal-retry" class="popup-btn hover-effect">
+                            <img src="images/06_fail/btn_replay.png">
+                        </button>
+                        <button id="btn-modal-close" class="popup-btn hover-effect">
+                            <img src="images/02_achievement/btn_close.png">
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div> 
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
