@@ -8,20 +8,14 @@
 </head>
 <body>
 
-    <!-- 音效區 -->
-    <audio id="bg-music" loop>
-        <source src="audio/bgm.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="sfx-click">
-        <source src="audio/click.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bg-music" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-click"><source src="audio/click.mp3" type="audio/mpeg"></audio>
 
-    <!-- 最外層縮放器 -->
     <div id="game-scale-wrapper">
-        <!-- 核心遊戲機：固定 1386x640 -->
         <div id="game-container">
             
-            <!-- [重要] 全域 UI (右上角) -->
+            <!-- ★ 全域 UI (右上角：成就、演化、聲音) ★ -->
+            <!-- 這是你要的「右邊三個」，不管在大廳還是遊戲中都顯示在右上角 -->
             <div id="global-icons" class="lobby-icons">
                 <button id="btn-open-achievement" class="icon-btn hover-effect">
                     <img src="images/01_lobby/achieve.png">
@@ -53,35 +47,51 @@
             <!-- 2. 遊戲中 -->
             <div id="game-screen" class="screen">
                 <div class="full-bg" style="background-image: url('images/04_game/game_bg.jpg');"></div>
+                
                 <div class="game-layout-inner">
+                    <!-- 左側：棋盤 -->
                     <div class="playfield-area">
                         <div class="playfield-bg">
-                            <!-- 加上 id 方便 JS 做拖動特效 -->
                             <div class="grid-container" id="grid-container"></div>
                         </div>
                     </div>
+
+                    <!-- 右側：UI 面板 -->
                     <div class="sidebar-area">
-                        <div class="god-container">
-                            <img src="images/04_game/mission.png" id="god-character">
+                        <!-- 1. 上帝 & 對話框 -->
+                        <div class="god-wrapper">
+                            <div id="god-dialog" class="god-dialog hidden">加油！</div>
+                            <div class="god-container">
+                                <img src="images/04_game/mission.png" id="god-character">
+                            </div>
                         </div>
+                        
+                        <!-- 2. 數據看板 (分數/步數) -->
                         <div class="info-group">
                             <div class="stat-box" style="background-image: url('images/04_game/action_step.png');">
                                 <span id="moves-display">∞</span>
                             </div>
                             <div class="stat-box" style="background-image: url('images/04_game/score.png');">
                                 <span id="score-display">0</span>
+                                <div id="score-effect" class="score-effect"></div>
                             </div>
                         </div>
-                        <!-- 補齊三個按鈕 -->
-                        <div class="controls-area">
-                            <button class="control-btn hover-effect" id="btn-back-home">
+
+                        <!-- 3. 下方技能按鈕 (這是你要的「下方三個」) -->
+                        <div class="bottom-skills">
+                            <!-- 回首頁 -->
+                            <button class="skill-btn hover-effect" id="btn-back-home">
                                 <img src="images/04_game/menu.png">
                             </button>
-                            <button class="control-btn hover-effect" id="btn-game-sound">
-                                <img id="img-game-sound" src="images/01_lobby/btn_sound_on.png">
+                            <!-- 上一步 (暫時用文字/Icon代替，請換成 icon_undo.png) -->
+                            <button class="skill-btn hover-effect" id="btn-undo">
+                                <span style="font-size:24px;">↺</span>
+                                <span class="skill-cost">-100</span>
                             </button>
-                            <button class="control-btn hover-effect" id="btn-game-help">
-                                <img src="images/01_lobby/help.png">
+                            <!-- 火山 (暫時用文字/Icon代替，請換成 icon_volcano.png) -->
+                            <button class="skill-btn hover-effect" id="btn-volcano">
+                                <span style="font-size:24px;">🌋</span>
+                                <span class="skill-cost">-500</span>
                             </button>
                         </div>
                     </div>
@@ -97,42 +107,8 @@
                         <img src="images/02_achievement/btn_close.png">
                     </button>
 
-                    <div class="achievement-list">
-                        <!-- 成就 1 -->
-                        <div class="ach-item completed">
-                            <div class="ach-col-icon"><img src="images/03_evolution/n2.png"></div>
-                            <div class="ach-col-title">黏糊糊的開始</div>
-                            <div class="ach-col-desc">把一鍋熱湯變成了單細胞。<br>小心別把它喝掉了！</div>
-                            <div class="ach-col-status"><img src="images/02_achievement/ach_finish_img.png"></div>
-                        </div>
-                        <!-- 成就 2 -->
-                        <div class="ach-item">
-                            <div class="ach-col-icon"><img src="images/03_evolution/n64.png"></div>
-                            <div class="ach-col-title">隕石磁鐵</div>
-                            <div class="ach-col-desc">演化出恐龍。<br>希望能撐過下一次流星雨。</div>
-                            <div class="ach-col-status"><img src="images/02_achievement/ach_img.png"></div>
-                        </div>
-                        <!-- 成就 3 -->
-                        <div class="ach-item">
-                            <div class="ach-col-icon"><img src="images/03_evolution/n1024.png"></div>
-                            <div class="ach-col-title">終於穿褲子了</div>
-                            <div class="ach-col-desc">演化出原始人。<br>雖然只有一塊布，但也是進步。</div>
-                            <div class="ach-col-status"><img src="images/02_achievement/ach_img.png"></div>
-                        </div>
-                        <!-- 成就 4 -->
-                        <div class="ach-item">
-                            <div class="ach-col-icon"><img src="images/03_evolution/n32768.png"></div>
-                            <div class="ach-col-title">電池充飽沒？</div>
-                            <div class="ach-col-desc">成為生化人。<br>現在你有 50% 的機率會生鏽。</div>
-                            <div class="ach-col-status"><img src="images/02_achievement/ach_img.png"></div>
-                        </div>
-                        <!-- 成就 5 -->
-                        <div class="ach-item">
-                            <div class="ach-col-icon"><img src="images/03_evolution/n131072.png"></div>
-                            <div class="ach-col-title">老闆好！</div>
-                            <div class="ach-col-desc">達到演化的頂點。<br>恭喜！你可以去創造自己的宇宙了。</div>
-                            <div class="ach-col-status"><img src="images/02_achievement/ach_img.png"></div>
-                        </div>
+                    <div class="achievement-list" id="achievement-list-container">
+                        <!-- JS 動態生成 -->
                     </div>
                 </div>
             </div>
@@ -141,6 +117,7 @@
             <div id="modal-help" class="modal-overlay hidden">
                 <div class="book-container">
                     <img src="images/03_evolution/ach_img.png" class="book-bg">
+                    <!-- 左右頁容器，內容由 JS 生成 -->
                     <div class="page-left"><div id="evo-grid-left" class="book-grid-layout"></div></div>
                     <div class="page-right"><div id="evo-grid-right" class="book-grid-layout"></div></div>
                 </div>
@@ -159,6 +136,19 @@
                             <img src="images/02_achievement/btn_close.png">
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- [新] 目標提示彈窗 (遊戲開始前顯示) -->
+            <div id="modal-target" class="modal-overlay hidden">
+                <div class="modal-content-small" style="background: rgba(255,255,255,0.9); border-radius: 20px; justify-content: center; gap: 20px;">
+                     <h2 style="margin:0; color:#5D4037;">關卡目標</h2>
+                     <div id="target-content" style="text-align: center;">
+                         <!-- JS 填入目標 -->
+                     </div>
+                     <button id="btn-target-confirm" class="popup-btn hover-effect">
+                         <img src="images/03_evolution/btn_play.png">
+                     </button>
                 </div>
             </div>
 

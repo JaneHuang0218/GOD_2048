@@ -1,120 +1,90 @@
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. 自動縮放
+    // 1. 縮放
     function resizeGame() {
         const container = document.getElementById('game-container');
-        const winW = window.innerWidth;
-        const winH = window.innerHeight;
-        const targetW = 1386;
-        const targetH = 640;
-        const scale = Math.min(winW / targetW, winH / targetH);
+        const scale = Math.min(window.innerWidth / 1386, window.innerHeight / 640);
         container.style.transform = `scale(${scale})`;
     }
     window.addEventListener('resize', resizeGame);
     resizeGame();
 
-    // 2. 音樂與音效
+    // 2. 音樂
     const bgMusic = document.getElementById('bg-music');
     const sfxClick = document.getElementById('sfx-click');
     const btnToggleSound = document.getElementById('btn-toggle-sound');
-    const btnGameSound = document.getElementById('btn-game-sound');
     const imgSound = document.getElementById('img-sound');
-    const imgGameSound = document.getElementById('img-game-sound');
     let isSoundOn = true;
 
-    function playClickSound() {
-        if(isSoundOn && sfxClick) {
-            sfxClick.currentTime = 0;
-            sfxClick.play().catch(()=>{});
-        }
-    }
-
+    function playClick() { if(isSoundOn) { sfxClick.currentTime=0; sfxClick.play().catch(()=>{}); } }
+    
     document.body.addEventListener('click', (e) => {
-        if (e.target.closest('.hover-effect')) playClickSound();
-        if(isSoundOn && bgMusic && bgMusic.paused) bgMusic.play().catch(e => {});
+        if (e.target.closest('.hover-effect')) playClick();
+        if(isSoundOn && bgMusic.paused) bgMusic.play().catch(()=>{});
     }, { capture: true });
 
-    function toggleSoundState(e) {
-        if(e) e.stopPropagation();
-        isSoundOn = !isSoundOn;
-        const iconPath = isSoundOn ? "images/01_lobby/btn_sound_on.png" : "images/01_lobby/btn_sound_off.png";
-        if(imgSound) imgSound.src = iconPath;
-        if(imgGameSound) imgGameSound.src = iconPath;
-        
-        if (isSoundOn) bgMusic.play(); else bgMusic.pause();
+    if(btnToggleSound) {
+        btnToggleSound.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isSoundOn = !isSoundOn;
+            const path = isSoundOn ? "images/01_lobby/btn_sound_on.png" : "images/01_lobby/btn_sound_off.png";
+            imgSound.src = path;
+            if(isSoundOn) bgMusic.play(); else bgMusic.pause();
+        });
     }
-    if(btnToggleSound) btnToggleSound.addEventListener('click', toggleSoundState);
-    if(btnGameSound) btnGameSound.addEventListener('click', toggleSoundState);
 
-    // 3. UI 互動
+    // 3. UI 與 彈窗
     const globalIcons = document.getElementById('global-icons');
     const modalAchieve = document.getElementById('modal-achievement');
     const modalHelp = document.getElementById('modal-help');
-    
-    const btnOpenAchieve = document.getElementById('btn-open-achievement');
-    const btnOpenHelp = document.getElementById('btn-open-help');
-    const btnGameHelp = document.getElementById('btn-game-help');
-    const btnCloseAchieve = document.getElementById('btn-close-achievement');
+    const modalTarget = document.getElementById('modal-target');
+    const modalGameOver = document.getElementById('modal-gameover');
     
     let isInGame = false;
 
     function toggleModal(targetModal) {
-        const isTargetOpen = !targetModal.classList.contains('hidden');
+        const wasHidden = targetModal.classList.contains('hidden');
+        
+        // 先全關
         modalAchieve.classList.add('hidden');
         modalHelp.classList.add('hidden');
 
-        if (!isTargetOpen) {
+        // 如果原本是隱藏的，現在就打開
+        if (wasHidden) {
             targetModal.classList.remove('hidden');
-            if(globalIcons) globalIcons.style.display = 'flex';
+        }
+        // 只要有彈窗打開，全域按鈕就要顯示 (方便關閉)
+        // 否則看現在是否在遊戲中決定顯示與否
+        const anyOpen = !modalAchieve.classList.contains('hidden') || !modalHelp.classList.contains('hidden');
+        
+        if (anyOpen) {
+            globalIcons.style.display = 'flex';
         } else {
-            if (isInGame) {
-                if(globalIcons) globalIcons.style.display = 'none';
-            } else {
-                if(globalIcons) globalIcons.style.display = 'flex';
-            }
+            if (isInGame) globalIcons.style.display = 'none';
+            else globalIcons.style.display = 'flex';
         }
     }
 
-    if(btnOpenAchieve) btnOpenAchieve.addEventListener('click', () => toggleModal(modalAchieve));
-    if(btnOpenHelp) btnOpenHelp.addEventListener('click', () => toggleModal(modalHelp));
-    if(btnGameHelp) btnGameHelp.addEventListener('click', () => toggleModal(modalHelp));
-    if(btnCloseAchieve) btnCloseAchieve.addEventListener('click', () => toggleModal(modalAchieve));
-
-    const bindBtn = (id, func) => {
-        const el = document.getElementById(id);
-        if(el) el.addEventListener('click', func);
-    };
-
-    bindBtn('btn-normal', () => startGame('normal'));
-    bindBtn('btn-endless', () => startGame('endless'));
-    bindBtn('btn-back-home', goHome);
-    bindBtn('btn-modal-close', goHome);
-    bindBtn('btn-modal-retry', () => {
-        document.getElementById('modal-gameover').classList.add('hidden');
-        initBoard();
+    document.getElementById('btn-open-achievement').addEventListener('click', () => {
+        updateAchievementList();
+        toggleModal(modalAchieve);
     });
+    document.getElementById('btn-open-help').addEventListener('click', () => {
+        updateEvolutionBook();
+        toggleModal(modalHelp);
+    });
+    document.getElementById('btn-close-achievement').addEventListener('click', () => toggleModal(modalAchieve));
 
-    // 4. 遊戲與圖鑑
+    // 4. 遊戲流程
     const tileImages = {
-        2: 'images/03_evolution/n2.png',
-        4: 'images/03_evolution/n4.png',
-        8: 'images/03_evolution/n8.png',
-        16: 'images/03_evolution/n16.png',
-        32: 'images/03_evolution/n32.png',
-        64: 'images/03_evolution/n64.png',
-        128: 'images/03_evolution/n128.png',
-        256: 'images/03_evolution/n256.png',
-        512: 'images/03_evolution/n512.png',
-        1024: 'images/03_evolution/n1024.png',
-        2048: 'images/03_evolution/n2048.png',
-        4096: 'images/03_evolution/n4096.png',
-        8192: 'images/03_evolution/n8192.png',
-        16384: 'images/03_evolution/n16384.png',
-        32768: 'images/03_evolution/n32768.png',
-        65536: 'images/03_evolution/n65536.png',
-        131072: 'images/03_evolution/n131072.png'
+        2: 'images/03_evolution/n2.png', 4: 'images/03_evolution/n4.png', 8: 'images/03_evolution/n8.png',
+        16: 'images/03_evolution/n16.png', 32: 'images/03_evolution/n32.png', 64: 'images/03_evolution/n64.png',
+        128: 'images/03_evolution/n128.png', 256: 'images/03_evolution/n256.png', 512: 'images/03_evolution/n512.png',
+        1024: 'images/03_evolution/n1024.png', 2048: 'images/03_evolution/n2048.png', 4096: 'images/03_evolution/n4096.png',
+        8192: 'images/03_evolution/n8192.png', 16384: 'images/03_evolution/n16384.png', 32768: 'images/03_evolution/n32768.png',
+        65536: 'images/03_evolution/n65536.png', 131072: 'images/03_evolution/n131072.png'
     };
-
+    
     const evolutionData = [
         { val: 2, name: "原蟲", isUnlocked: true }, { val: 4, name: "軟體", isUnlocked: true },
         { val: 8, name: "甲殼", isUnlocked: true }, { val: 16, name: "魚類", isUnlocked: true },
@@ -127,53 +97,80 @@ document.addEventListener('DOMContentLoaded', () => {
         { val: 131072, name: "神", isUnlocked: false }
     ];
 
-    const leftGrid = document.getElementById('evo-grid-left');
-    const rightGrid = document.getElementById('evo-grid-right');
-    if (leftGrid && rightGrid) {
-        leftGrid.innerHTML = ''; rightGrid.innerHTML = '';
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'book-item title-card';
-        titleDiv.innerHTML = `<img src="images/03_evolution/help_txt.png" alt="演化">`;
-        leftGrid.appendChild(titleDiv);
-
-        evolutionData.forEach((item, index) => {
-            const wrapper = document.createElement('div');
-            const numStr = (index + 1).toString().padStart(2, '0');
-            if (item.isUnlocked) {
-                wrapper.className = 'book-item';
-                wrapper.innerHTML = `<img class="item-frame" src="images/03_evolution/sl_bg.png"><img class="item-creature" src="${tileImages[item.val]}"><div class="item-info"><span class="num-text">${numStr}</span><span class="name-text">${item.name}</span></div>`;
-            } else {
-                wrapper.className = 'book-item locked';
-                wrapper.innerHTML = `<img class="item-frame" src="images/03_evolution/unknown.png">`;
-            }
-            if (index < 8) leftGrid.appendChild(wrapper); else rightGrid.appendChild(wrapper);
-        });
-    }
-
-    // 遊戲核心
-    const godStates = { idle: 'images/04_game/mission.png', thinking: 'images/04_game/alien_random/alien_random1.png', success: 'images/04_game/alien_victory/alien_victory1.png', fail: 'images/04_game/alien_fail/alien_fail1.png' };
-    const bgWin = "url('images/02_achievement/ach_finish_bg.png')";
-    const bgFail = "url('images/06_fail/lvl_failed.png')";
-    const gridContainer = document.getElementById('grid-container');
-    const scoreDisplay = document.getElementById('score-display');
-    const movesDisplay = document.getElementById('moves-display');
-    const godCharacter = document.getElementById('god-character');
-    const modalGameOver = document.getElementById('modal-gameover');
-    const modalBgLayer = document.getElementById('modal-bg-layer');
+    const achievements = [
+        { title: "生命的火花", desc: "合成出單細胞", goal: 2 },
+        { title: "陸地霸主", desc: "演化出恐龍", goal: 64 },
+        { title: "智慧的曙光", desc: "演化出原始人", goal: 1024 },
+        { title: "機械飛昇", desc: "成為生化人", goal: 32768 },
+        { title: "創世之神", desc: "達到演化頂點", goal: 131072 }
+    ];
 
     const size = 4;
     let board = [];
     let score = 0;
     let moves = 0;
-    let gameMode = 'endless'; 
-    const maxMovesNormal = 1000;
+    let maxTile = 2;
+    let gameMode = 'endless';
+    let prevBoard = null;
+    let prevScore = 0;
+
+    // 按鈕綁定
+    document.getElementById('btn-endless').addEventListener('click', () => startGame('endless'));
+    document.getElementById('btn-normal').addEventListener('click', () => {
+        // 普通模式：先顯示目標，再開始
+        const targetHTML = `<img src="${tileImages[2048]}" style="width:80px;"><p>目標：合成出 人類 (2048)</p>`;
+        document.getElementById('target-content').innerHTML = targetHTML;
+        modalTarget.classList.remove('hidden');
+    });
+
+    document.getElementById('btn-target-confirm').addEventListener('click', () => {
+        modalTarget.classList.add('hidden');
+        startGame('normal');
+    });
+
+    document.getElementById('btn-back-home').addEventListener('click', goHome);
+    
+    // 技能
+    document.getElementById('btn-undo').addEventListener('click', () => {
+        if(!prevBoard) return showDialog("無法上一步");
+        if(score < 100) return showDialog("分數不足 (-100)");
+        score -= 100;
+        board = [...prevBoard];
+        updateUI();
+        showDialog("時光倒流！");
+        showScoreEffect(100);
+    });
+
+    document.getElementById('btn-volcano').addEventListener('click', () => {
+        if(score < 500) return showDialog("分數不足 (-500)");
+        let targets = board.map((v, i) => (v > 0 && v <= 8) ? i : -1).filter(i => i !== -1);
+        if(targets.length === 0) return showDialog("無低階生物");
+        
+        score -= 500;
+        for(let i=0; i<4; i++) {
+            if(targets.length) {
+                let r = Math.floor(Math.random() * targets.length);
+                board[targets[r]] = 0;
+                targets.splice(r, 1);
+            }
+        }
+        updateUI();
+        showDialog("天火降臨！");
+        showScoreEffect(500);
+    });
+
+    document.getElementById('btn-modal-retry').addEventListener('click', () => {
+        modalGameOver.classList.add('hidden');
+        initBoard();
+    });
+    document.getElementById('btn-modal-close').addEventListener('click', goHome);
 
     function startGame(mode) {
         gameMode = mode;
         isInGame = true;
         document.getElementById('start-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
-        if(globalIcons) globalIcons.style.display = 'none';
+        globalIcons.style.display = 'none';
         initBoard();
     }
 
@@ -181,199 +178,156 @@ document.addEventListener('DOMContentLoaded', () => {
         isInGame = false;
         document.getElementById('game-screen').classList.remove('active');
         document.getElementById('start-screen').classList.add('active');
-        document.getElementById('modal-gameover').classList.add('hidden');
-        if(globalIcons) globalIcons.style.display = 'flex';
+        modalGameOver.classList.add('hidden');
+        globalIcons.style.display = 'flex';
     }
 
     function initBoard() {
         board = Array(size * size).fill(0);
         score = 0;
-        moves = gameMode === 'normal' ? maxMovesNormal : 0;
+        moves = gameMode === 'normal' ? 1000 : 0;
+        maxTile = 2;
+        prevBoard = null;
+        updateAchievementList();
+        updateEvolutionBook();
+        addNewTile(); addNewTile();
         updateUI();
-        setGodState('idle');
-        addNewTile();
-        addNewTile();
-        drawBoard();
     }
 
     function addNewTile() {
-        let emptyTiles = [];
-        board.forEach((val, index) => {
-            if (val === 0) emptyTiles.push(index);
-        });
-        if (emptyTiles.length > 0) {
-            let r = Math.floor(Math.random() * emptyTiles.length);
-            board[emptyTiles[r]] = Math.random() > 0.9 ? 4 : 2;
-        }
-    }
-
-    function drawBoard() {
-        if(!gridContainer) return;
-        gridContainer.innerHTML = '';
-        board.forEach(value => {
-            const tile = document.createElement('div');
-            tile.classList.add('tile');
-            if (value > 0) {
-                const inner = document.createElement('div');
-                inner.classList.add('tile-inner');
-                const imgPath = tileImages[value] || tileImages[2];
-                inner.style.backgroundImage = `url('${imgPath}')`;
-                tile.appendChild(inner);
-            }
-            gridContainer.appendChild(tile);
-        });
+        let empty = [];
+        board.forEach((v, i) => { if(v===0) empty.push(i); });
+        if(empty.length) board[empty[Math.floor(Math.random()*empty.length)]] = Math.random()>0.9?4:2;
     }
 
     function updateUI() {
-        if(scoreDisplay) scoreDisplay.innerText = score;
-        if(movesDisplay) movesDisplay.innerText = (gameMode === 'normal') ? moves : "∞";
-    }
-
-    function setGodState(state) {
-        if(godCharacter) {
-            godCharacter.src = godStates[state];
-            if (state !== 'idle') {
-                setTimeout(() => {
-                    if (!modalGameOver.classList.contains('active') && !checkGameOver()) {
-                        godCharacter.src = godStates.idle;
-                    }
-                }, 1500);
+        document.getElementById('score-display').innerText = score;
+        document.getElementById('moves-display').innerText = gameMode === 'normal' ? moves : "∞";
+        const grid = document.getElementById('grid-container');
+        grid.innerHTML = '';
+        board.forEach(v => {
+            const t = document.createElement('div'); t.className = 'tile';
+            if(v>0) {
+                if(v > maxTile) maxTile = v;
+                t.innerHTML = `<div class="tile-inner" style="background-image:url('${tileImages[v]}')"></div>`;
             }
-        }
+            grid.appendChild(t);
+        });
+        updateAchievementList(); // 每次移動檢查成就
     }
 
-    function move(direction) {
-        if (checkGameOver()) return;
-        let hasMoved = false;
-        let merged = false;
-        let tempBoard = [...board];
-        const rotateBoard = (b) => {
-            let newB = Array(size*size).fill(0);
-            for(let r=0; r<size; r++) for(let c=0; c<size; c++) newB[c*size + (size-1-r)] = b[r*size+c];
-            return newB;
-        };
-        
-        // ★★★ 修正後的方向邏輯 (解決上下相反) ★★★
-        let rotations = 0;
-        if (direction === 'left') rotations = 2;
-        if (direction === 'up') rotations = 1;   // 修正：上是轉 1 次 (90度)
-        if (direction === 'down') rotations = 3; // 修正：下是轉 3 次 (270度)
-
-        for(let i=0; i<rotations; i++) tempBoard = rotateBoard(tempBoard);
-        for (let r = 0; r < size; r++) {
-            let row = [];
-            for(let c=0; c<size; c++) row.push(tempBoard[r*size+c]);
-            let filtered = row.filter(v => v !== 0);
-            let newRow = [];
-            for (let i = 0; i < filtered.length; i++) {
-                if (i < filtered.length - 1 && filtered[i] === filtered[i+1]) {
-                    let newVal = filtered[i] * 2;
-                    newRow.push(newVal);
-                    score += newVal;
-                    merged = true;
-                    i++;
-                } else {
-                    newRow.push(filtered[i]);
-                }
-            }
-            while (newRow.length < size) newRow.unshift(0); 
-            for(let c=0; c<size; c++) tempBoard[r*size+c] = newRow[c];
-        }
-        let backRotations = (4 - rotations) % 4;
-        for(let i=0; i<backRotations; i++) tempBoard = rotateBoard(tempBoard);
-        
-        if (JSON.stringify(board) !== JSON.stringify(tempBoard)) {
-            board = tempBoard;
-            hasMoved = true;
-        }
-        if (hasMoved) {
-            addNewTile();
-            drawBoard();
-            if (gameMode === 'normal') {
-                moves--;
-                if (moves <= 0) showGameOver(false);
-            }
-            updateUI();
-            setGodState(merged ? 'success' : 'thinking');
-            if (board.includes(131072)) showGameOver(true);
-            else if (checkGameOver()) showGameOver(false);
-        }
+    function showDialog(text) {
+        const d = document.getElementById('god-dialog');
+        d.innerText = text; d.classList.remove('hidden');
+        setTimeout(()=>d.classList.add('hidden'), 1500);
     }
 
-    function checkGameOver() {
-        if (board.includes(0)) return false;
-        for (let i = 0; i < size * size; i++) {
-            let r = Math.floor(i / size);
-            let c = i % size;
-            let current = board[i];
-            if (c < size - 1 && current === board[i + 1]) return false;
-            if (r < size - 1 && current === board[i + size]) return false;
-        }
-        return true;
+    function showScoreEffect(val) {
+        const ef = document.getElementById('score-effect');
+        ef.innerText = `-${val}`;
+        ef.style.animation = 'none';
+        ef.offsetHeight; 
+        ef.style.animation = 'floatUp 1s forwards';
     }
 
-    function showGameOver(isWin) {
-        modalGameOver.classList.remove('hidden');
-        if (isWin) {
-            modalBgLayer.style.backgroundImage = bgWin;
-            setGodState('success');
-        } else {
-            modalBgLayer.style.backgroundImage = bgFail;
-            setGodState('fail');
-        }
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (!document.getElementById('game-screen').classList.contains('active')) return;
-        if (e.key === 'ArrowLeft') move('left');
-        if (e.key === 'ArrowRight') move('right');
-        if (e.key === 'ArrowUp') move('up');
-        if (e.key === 'ArrowDown') move('down');
-    });
-
-    // ★★★ 拖動特效與方向修正 ★★★
-    let touchStartX = 0;
-    let touchStartY = 0;
-    if(gridContainer){
-        gridContainer.addEventListener('touchstart', e => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            // 移除 transition 以便即時跟隨手指
-            gridContainer.style.transition = 'none';
-        }, {passive: false});
-
-        gridContainer.addEventListener('touchmove', e => {
-            e.preventDefault(); // 防止滾動
-            let touchCurrentX = e.touches[0].clientX;
-            let touchCurrentY = e.touches[0].clientY;
-            let dx = touchCurrentX - touchStartX;
-            let dy = touchCurrentY - touchStartY;
-            
-            // 限制最大移動距離 (視覺回饋)
-            const maxDrag = 15; 
-            let tx = Math.max(-maxDrag, Math.min(maxDrag, dx));
-            let ty = Math.max(-maxDrag, Math.min(maxDrag, dy));
-            
-            gridContainer.style.transform = `translate(${tx}px, ${ty}px)`;
-        }, {passive: false});
-
-        gridContainer.addEventListener('touchend', e => {
-            let touchEndX = e.changedTouches[0].clientX;
-            let touchEndY = e.changedTouches[0].clientY;
-            
-            // 恢復原位
-            gridContainer.style.transition = 'transform 0.2s ease-out';
-            gridContainer.style.transform = 'translate(0, 0)';
-
-            let dx = touchEndX - touchStartX;
-            let dy = touchEndY - touchStartY;
-
-            if (Math.abs(dx) > Math.abs(dy)) {
-                if (Math.abs(dx) > 30) move(dx > 0 ? 'right' : 'left');
-            } else {
-                // 這裡配合上面的 rotations 修正：dy > 0 是往下滑 (down)，dy < 0 是往上滑 (up)
-                if (Math.abs(dy) > 30) move(dy > 0 ? 'down' : 'up');
-            }
+    // 成就列表渲染
+    function updateAchievementList() {
+        const list = document.getElementById('achievement-list-container');
+        if(!list) return;
+        list.innerHTML = '';
+        achievements.forEach(ach => {
+            const done = maxTile >= ach.goal;
+            const statusImg = done ? 'images/02_achievement/ach_finish_img.png' : 'images/02_achievement/ach_img.png';
+            const cls = done ? 'ach-item completed' : 'ach-item';
+            list.innerHTML += `
+                <div class="${cls}">
+                    <div class="ach-col-icon"><img src="${tileImages[ach.goal]}"></div>
+                    <div class="ach-col-title">${ach.title}</div>
+                    <div class="ach-col-desc">${ach.desc}</div>
+                    <div class="ach-col-status"><img src="${statusImg}"></div>
+                </div>`;
         });
     }
+
+    // 圖鑑渲染
+    function updateEvolutionBook() {
+        const left = document.getElementById('evo-grid-left');
+        const right = document.getElementById('evo-grid-right');
+        if(!left) return;
+        left.innerHTML = `<div class="book-item title-card"><img src="images/03_evolution/help_txt.png"></div>`;
+        right.innerHTML = '';
+
+        evolutionData.forEach((item, i) => {
+            const unlocked = maxTile >= item.val;
+            const num = (i+1).toString().padStart(2,'0');
+            const w = document.createElement('div');
+            if(unlocked) {
+                w.className = 'book-item';
+                w.innerHTML = `<img class="item-frame" src="images/03_evolution/sl_bg.png"><img class="item-creature" src="${tileImages[item.val]}"><div class="item-info"><span class="num-text">${num}</span><span class="name-text">${item.name}</span></div>`;
+            } else {
+                w.className = 'book-item locked';
+                w.innerHTML = `<img class="item-frame" src="images/03_evolution/unknown.png"><div class="item-info"><span class="name-text">???</span></div>`;
+            }
+            if(i < 8) left.appendChild(w); else right.appendChild(w);
+        });
+    }
+
+    // 2048 核心邏輯
+    function move(dir) {
+        prevBoard = [...board];
+        prevScore = score;
+
+        let moved = false;
+        let temp = [...board];
+        const rotate = (b) => {
+            let n = Array(size*size).fill(0);
+            for(let r=0; r<size; r++) for(let c=0; c<size; c++) n[c*size+(size-1-r)] = b[r*size+c];
+            return n;
+        };
+        
+        let rots = 0;
+        if(dir==='left') rots=2; if(dir==='up') rots=1; if(dir==='down') rots=3;
+        for(let k=0; k<rots; k++) temp = rotate(temp);
+
+        for(let r=0; r<size; r++) {
+            let row = [];
+            for(let c=0; c<size; c++) row.push(temp[r*size+c]);
+            let fil = row.filter(v=>v);
+            let res = [];
+            for(let k=0; k<fil.length; k++) {
+                if(fil[k]===fil[k+1]) { res.push(fil[k]*2); score+=fil[k]*2; k++; }
+                else res.push(fil[k]);
+            }
+            while(res.length<size) res.unshift(0);
+            for(let c=0; c<size; c++) temp[r*size+c] = res[c];
+        }
+        
+        let back = (4-rots)%4;
+        for(let k=0; k<back; k++) temp = rotate(temp);
+
+        if(JSON.stringify(board)!==JSON.stringify(temp)) {
+            board = temp; moved = true;
+        }
+
+        if(moved) {
+            addNewTile(); updateUI();
+            if(gameMode==='normal') { moves--; if(moves<=0) showGameOver(false); }
+            if(board.includes(2048) && gameMode==='normal') showGameOver(true); // 範例2048贏
+        }
+    }
+
+    function showGameOver(win) {
+        modalGameOver.classList.remove('hidden');
+        const bg = win ? "url('images/02_achievement/ach_finish_bg.png')" : "url('images/06_fail/lvl_failed.png')";
+        document.getElementById('modal-bg-layer').style.backgroundImage = bg;
+    }
+
+    document.addEventListener('keydown', e => {
+        if(document.getElementById('game-screen').classList.contains('active')) {
+            if(e.key==='ArrowLeft') move('left');
+            if(e.key==='ArrowRight') move('right');
+            if(e.key==='ArrowUp') move('up');
+            if(e.key==='ArrowDown') move('down');
+        }
+    });
 });
