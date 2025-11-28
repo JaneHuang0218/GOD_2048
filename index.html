@@ -8,14 +8,18 @@
 </head>
 <body>
 
+    <!-- 音效區 -->
     <audio id="bg-music" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-click"><source src="audio/click.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-merge"><source src="audio/merge.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-volcano"><source src="audio/explode.mp3" type="audio/mpeg"></audio> <!-- 火山專用 -->
+    <audio id="sfx-fail"><source src="audio/fail.mp3" type="audio/mpeg"></audio>       <!-- 失敗專用 (請準備 fail.mp3) -->
+    <audio id="sfx-win"><source src="audio/win.mp3" type="audio/mpeg"></audio>
 
     <div id="game-scale-wrapper">
         <div id="game-container">
             
-            <!-- ★ 全域 UI (右上角：成就、演化、聲音) ★ -->
-            <!-- 這是你要的「右邊三個」，不管在大廳還是遊戲中都顯示在右上角 -->
+            <!-- 全域 UI (右上角) -->
             <div id="global-icons" class="lobby-icons">
                 <button id="btn-open-achievement" class="icon-btn hover-effect">
                     <img src="images/01_lobby/achieve.png">
@@ -44,21 +48,34 @@
                 </div>
             </div>
 
+            <!-- 1.5 關卡選擇 -->
+            <div id="level-select-screen" class="screen">
+                <div class="full-bg" style="background-image: url('images/01_lobby/logo_bg.png');"></div>
+                <div class="level-popup">
+                    <img src="images/05_level/lvl_select.png" class="level-bg">
+                    <button id="btn-close-level" class="close-btn hover-effect" style="top: 20px; right: 20px;">
+                        <img src="images/02_achievement/btn_close.png">
+                    </button>
+                    <div class="level-grid-container" id="level-grid-container"></div>
+                </div>
+            </div>
+
             <!-- 2. 遊戲中 -->
             <div id="game-screen" class="screen">
                 <div class="full-bg" style="background-image: url('images/04_game/game_bg.jpg');"></div>
-                
                 <div class="game-layout-inner">
+                    
                     <!-- 左側：棋盤 -->
                     <div class="playfield-area">
                         <div class="playfield-bg">
                             <div class="grid-container" id="grid-container"></div>
+                            <div id="explosion-layer"></div>
                         </div>
                     </div>
 
                     <!-- 右側：UI 面板 -->
                     <div class="sidebar-area">
-                        <!-- 1. 上帝 & 對話框 -->
+                        <!-- 上帝 -->
                         <div class="god-wrapper">
                             <div id="god-dialog" class="god-dialog hidden">加油！</div>
                             <div class="god-container">
@@ -66,7 +83,7 @@
                             </div>
                         </div>
                         
-                        <!-- 2. 數據看板 (分數/步數) -->
+                        <!-- 數據看板 -->
                         <div class="info-group">
                             <div class="stat-box" style="background-image: url('images/04_game/action_step.png');">
                                 <span id="moves-display">∞</span>
@@ -77,20 +94,17 @@
                             </div>
                         </div>
 
-                        <!-- 3. 下方技能按鈕 (這是你要的「下方三個」) -->
+                        <!-- 技能按鈕 -->
                         <div class="bottom-skills">
-                            <!-- 回首頁 -->
                             <button class="skill-btn hover-effect" id="btn-back-home">
                                 <img src="images/04_game/menu.png">
                             </button>
-                            <!-- 上一步 (暫時用文字/Icon代替，請換成 icon_undo.png) -->
                             <button class="skill-btn hover-effect" id="btn-undo">
-                                <span style="font-size:24px;">↺</span>
+                                <img src="images/04_game/hourglass.png" alt="Undo">
                                 <span class="skill-cost">-100</span>
                             </button>
-                            <!-- 火山 (暫時用文字/Icon代替，請換成 icon_volcano.png) -->
                             <button class="skill-btn hover-effect" id="btn-volcano">
-                                <span style="font-size:24px;">🌋</span>
+                                <img src="images/04_game/explode.png" alt="Boom">
                                 <span class="skill-cost">-500</span>
                             </button>
                         </div>
@@ -102,14 +116,10 @@
             <div id="modal-achievement" class="modal-overlay hidden">
                 <div class="popup-container" style="width: 817px; height: 556px;">
                     <img src="images/02_achievement/rank_bg.png" class="popup-bg">
-                    
                     <button id="btn-close-achievement" class="close-btn hover-effect">
                         <img src="images/02_achievement/btn_close.png">
                     </button>
-
-                    <div class="achievement-list" id="achievement-list-container">
-                        <!-- JS 動態生成 -->
-                    </div>
+                    <div class="achievement-list" id="achievement-list-container"></div>
                 </div>
             </div>
 
@@ -117,38 +127,61 @@
             <div id="modal-help" class="modal-overlay hidden">
                 <div class="book-container">
                     <img src="images/03_evolution/ach_img.png" class="book-bg">
-                    <!-- 左右頁容器，內容由 JS 生成 -->
                     <div class="page-left"><div id="evo-grid-left" class="book-grid-layout"></div></div>
                     <div class="page-right"><div id="evo-grid-right" class="book-grid-layout"></div></div>
                 </div>
             </div>
 
-            <!-- 5. 遊戲結束彈窗 -->
-            <div id="modal-gameover" class="modal-overlay hidden">
-                <div class="overlay-dimmer"></div> 
-                <div class="modal-content-small">
-                    <div id="modal-bg-layer" class="modal-bg-layer"></div>
-                    <div class="modal-btn-group">
-                        <button id="btn-modal-retry" class="popup-btn hover-effect">
-                            <img src="images/06_fail/btn_replay.png">
-                        </button>
-                        <button id="btn-modal-close" class="popup-btn hover-effect">
-                            <img src="images/02_achievement/btn_close.png">
-                        </button>
+            <!-- 目標彈窗 -->
+            <div id="modal-target" class="modal-overlay hidden">
+                <div class="overlay-dimmer"></div>
+                <div class="popup-container" style="width: 425px; height: 410px;">
+                    <img src="images/07_target/lvl_target.png" class="popup-bg">
+                    <div class="target-content-centered">
+                        <div class="target-icon-box">
+                            <img id="target-img" class="shake-anim" src="images/03_evolution/n1024.png">
+                        </div>
+                        <div class="modal-btn-group" style="margin-top: 30px;">
+                            <button id="btn-target-menu" class="popup-btn hover-effect">
+                                <img src="images/04_game/menu.png">
+                            </button>
+                            <button id="btn-target-start" class="popup-btn hover-effect">
+                                <img src="images/04_game/next.png">
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- [新] 目標提示彈窗 (遊戲開始前顯示) -->
-            <div id="modal-target" class="modal-overlay hidden">
-                <div class="modal-content-small" style="background: rgba(255,255,255,0.9); border-radius: 20px; justify-content: center; gap: 20px;">
-                     <h2 style="margin:0; color:#5D4037;">關卡目標</h2>
-                     <div id="target-content" style="text-align: center;">
-                         <!-- JS 填入目標 -->
-                     </div>
-                     <button id="btn-target-confirm" class="popup-btn hover-effect">
-                         <img src="images/03_evolution/btn_play.png">
-                     </button>
+            <!-- 5. 遊戲通關 (按鈕位置修正) -->
+            <div id="modal-complete" class="modal-overlay hidden">
+                <div id="confetti-container"></div>
+                <div class="modal-content-small">
+                    <img src="images/08_clear/lvl_complete_back.png" class="modal-bg-layer">
+                    <div class="complete-creature-box">
+                        <img id="complete-creature" src="images/03_evolution/n2.png">
+                    </div>
+                    <!-- 加上 style 調整按鈕位置 -->
+                    <div class="modal-btn-group three-btns" style="margin-bottom: 50px;">
+                        <button id="btn-comp-menu" class="popup-btn hover-effect"><img src="images/04_game/menu.png"></button>
+                        <button id="btn-comp-retry" class="popup-btn hover-effect"><img src="images/06_fail/btn_replay.png"></button>
+                        <button id="btn-comp-next" class="popup-btn hover-effect"><img src="images/04_game/next.png"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. 遊戲失敗 -->
+            <div id="modal-gameover" class="modal-overlay hidden">
+                <div class="overlay-dimmer"></div>
+                <div class="fail-anim-bg">
+                    <img src="images/04_game/alien_fail/alien_fail1.png" class="alien-fail-anim">
+                </div>
+                <div class="modal-content-small fail-window">
+                    <img src="images/06_fail/lvl_failed.png" class="modal-bg-layer">
+                    <div class="modal-btn-group">
+                        <button id="btn-fail-menu" class="popup-btn hover-effect"><img src="images/04_game/menu.png"></button>
+                        <button id="btn-fail-retry" class="popup-btn hover-effect"><img src="images/06_fail/btn_replay.png"></button>
+                    </div>
                 </div>
             </div>
 

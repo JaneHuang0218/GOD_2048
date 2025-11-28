@@ -1,10 +1,5 @@
 /* ================= 全局設定 ================= */
-body {
-    margin: 0; padding: 0; background-color: #000;
-    width: 100vw; height: 100vh; overflow: hidden;
-    display: flex; justify-content: center; align-items: center;
-    font-family: 'Microsoft JhengHei', 'Arial', sans-serif;
-}
+body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; font-family: 'Microsoft JhengHei', 'Arial', sans-serif; touch-action: none; }
 #game-scale-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
 #game-container { width: 1386px; height: 640px; position: relative; flex-shrink: 0; background-color: #222; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
 .full-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: 100% 100%; z-index: 0; }
@@ -14,68 +9,58 @@ body {
 .hover-effect:active { transform: scale(0.95); }
 .img-btn img, .icon-btn img, .control-btn img, .popup-btn img { display: block; width: 100%; height: auto; }
 
-/* 1. 大廳 (Lobby) */
-.lobby-logo { position: absolute; top: 30px; left: 0; right: 0; margin: 0 auto; width: 594px; z-index: 2; animation: float 3s infinite; }
+/* 全域按鈕 */
+.lobby-icons { position: absolute; top: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 9999; pointer-events: auto; }
+.icon-btn { width: 75px; } 
+
+/* 1. 大廳 (Logo 加快) */
+.lobby-logo { position: absolute; top: 30px; left: 0; right: 0; margin: 0 auto; width: 594px; z-index: 2; animation: float 1.5s infinite ease-in-out; }
 .lobby-buttons { position: absolute; bottom: 120px; left: 0; right: 0; margin: 0 auto; display: flex; justify-content: center; gap: 40px; z-index: 2; width: fit-content; }
 .img-btn { width: 205px; }
 
-/* ★ 全域按鈕 (右上角) ★ */
-.lobby-icons {
-    position: absolute; top: 40px; right: 40px;
-    display: flex; flex-direction: column; gap: 20px;
-    z-index: 10000; pointer-events: auto;
-}
-.icon-btn { width: 80px; }
+/* 1.5 關卡選擇 */
+.level-popup { width: 659px; height: 507px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; justify-content: center; align-items: center; }
+.level-bg { position: absolute; width: 100%; height: 100%; z-index: -1; }
+.level-grid-container { width: 560px; height: 240px; margin-top: 80px; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px; }
+.level-btn-wrap { position: relative; width: 92px; height: 92px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s; }
+.level-btn-wrap:active { transform: scale(0.9); }
+.level-btn-bg { position: absolute; width: 100%; height: 100%; }
+.level-num { position: relative; z-index: 2; color: #FFF; font-size: 40px; font-weight: 900; font-family: 'Arial Black', sans-serif; }
+.level-btn-wrap.locked { cursor: not-allowed; opacity: 0.8; }
+.level-btn-wrap.locked .level-num { display: none; }
 
-/* 2. 遊戲 (Game) */
-.game-layout-inner { position: relative; width: 100%; height: 100%; z-index: 5; display: flex; justify-content: center; align-items: center; gap: 40px; }
-
-/* 左側棋盤 */
-.playfield-area { width: 663px; height: 640px; position: relative; flex-shrink: 0; margin-left: 10px; display: flex; align-items: center; }
+/* 2. 遊戲 UI */
+.game-layout-inner { position: relative; width: 100%; height: 100%; z-index: 5; display: flex; justify-content: center; align-items: center; gap: 20px; }
+.playfield-area { width: 663px; height: 640px; position: relative; flex-shrink: 0; margin-left: 10px; }
 .playfield-bg { width: 100%; height: 100%; background: url('images/04_game/playfield.png') no-repeat center; background-size: 100% 100%; padding-top: 91px; padding-left: 122px; box-sizing: border-box; display: flex; justify-content: flex-start; align-items: flex-start; }
-.grid-container { display: grid; grid-template-columns: repeat(4, 116px); grid-template-rows: repeat(4, 116px); gap: 8px; transition: transform 0.1s linear; }
+.grid-container { display: grid; grid-template-columns: repeat(4, 116px); grid-template-rows: repeat(4, 116px); gap: 8px; position: relative; }
 .tile { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
 .tile-inner { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.explode-effect { position: absolute; width: 116px; height: 116px; z-index: 10; pointer-events: none; background-image: url('images/04_game/explode2.png'); background-size: contain; background-repeat: no-repeat; animation: explodeAnim 0.5s forwards; }
 
-/* 右側面板 */
-.sidebar-area { width: 300px; height: 600px; display: flex; flex-direction: column; align-items: center; padding-top: 30px; }
-.god-wrapper { position: relative; margin-bottom: 20px; }
-.god-container { width: 303px; height: 214px; display: flex; justify-content: center; align-items: flex-end; }
+.sidebar-area { width: 320px; height: 640px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; }
+.god-wrapper { position: relative; z-index: 2; margin-bottom: 0px; width: 100%; display: flex; justify-content: center; }
+.god-container { width: 280px; height: 200px; display: flex; justify-content: center; align-items: flex-end; }
 #god-character { width: 100%; height: 100%; object-fit: contain; }
-
-/* 上帝對話框 */
-.god-dialog {
-    position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
-    background: #fff; padding: 8px 15px; border-radius: 15px; border: 2px solid #5D4037;
-    font-weight: bold; color: #333; white-space: nowrap; z-index: 20; opacity: 1; transition: opacity 0.5s;
-}
+.god-dialog { position: absolute; top: 0px; left: 70%; background: #fff; padding: 8px 15px; border-radius: 15px; border: 3px solid #333; font-weight: bold; color: #333; white-space: nowrap; z-index: 20; opacity: 1; transition: opacity 0.5s; }
 .god-dialog.hidden { opacity: 0; }
 
-/* 分數板 */
-.info-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: auto; /* 把下方按鈕推到底 */ }
-.stat-box { 
-    width: 305px; height: 108px; background-size: 100% 100%; 
-    display: flex; justify-content: center; /* ★ 文字水平置中 */
-    align-items: center; 
-    padding-top: 15px; /* 文字垂直微調 */
-    box-sizing: border-box; position: relative;
+/* 分數板修正 (數字更大、更靠上) */
+.info-group { display: flex; flex-direction: column; gap: 15px; z-index: 1; margin-bottom: 20px; }
+.stat-box { width: 305px; height: 108px; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; padding-top: 0px; box-sizing: border-box; position: relative; }
+.stat-box span { 
+    font-size: 48px; /* 44px -> 48px */
+    color: #fff; font-weight: 900; font-family: monospace; 
+    margin-top: -10px; /* 再往上推 */
 }
-.stat-box span { font-size: 36px; color: #fff; font-weight: 800; font-family: monospace; text-shadow: 2px 2px 2px rgba(0,0,0,0.5); }
-.score-effect { position: absolute; top: -20px; right: 20px; color: #ff5252; font-weight: bold; font-size: 24px; opacity: 0; }
-@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
+.score-effect { position: absolute; top: -20px; right: 10px; color: #ff5252; font-weight: bold; font-size: 24px; opacity: 0; z-index: 10; }
 
-/* 下方技能按鈕區 */
-.bottom-skills { display: flex; gap: 20px; margin-bottom: 20px; }
-.skill-btn { 
-    width: 85px; height: 85px; 
-    background: rgba(0,0,0,0.2); border-radius: 12px; border: 2px solid #8D6E63;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    color: #fff;
-}
-.skill-btn img { width: 60px; height: 60px; object-fit: contain; }
-.skill-cost { font-size: 12px; color: #ff8a80; font-weight: bold; margin-top: -5px; }
+.bottom-skills { display: flex; gap: 15px; align-items: flex-end; z-index: 2; margin-left: 10px; }
+.skill-btn { width: 85px; height: 90px; background: none; border: none; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
+.skill-btn img { width: 85px; height: 85px; object-fit: contain; position: absolute; top: 0; }
+.skill-cost { position: relative; z-index: 2; font-size: 14px; color: #fff; font-weight: 900; background: rgba(0,0,0,0.6); padding: 1px 5px; border-radius: 5px; margin-bottom: 2px; }
 
-/* 3. 成就列表 (修復版) */
+/* 3. 成就列表 (修正欄位寬度) */
 .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 2000; display: flex; justify-content: center; align-items: center; }
 .modal-overlay.hidden { display: none; }
 .overlay-dimmer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: -1; }
@@ -83,50 +68,68 @@ body {
 .popup-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 .close-btn { position: absolute; top: 15px; right: 15px; width: 50px; height: 50px; }
 
-.achievement-list { 
-    width: 600px; height: 430px; 
-    margin-top: 85px; margin-left: auto; margin-right: auto; 
-    overflow-y: auto; padding-right: 10px; 
-}
-.achievement-list::-webkit-scrollbar { width: 8px; }
-.achievement-list::-webkit-scrollbar-thumb { background: #4FC3F7; border-radius: 4px; }
+.achievement-list { width: 600px; height: 430px; margin-top: 85px; margin-left: auto; margin-right: auto; overflow-y: auto; padding-right: 10px; }
+.achievement-list::-webkit-scrollbar { width: 10px; }
+.achievement-list::-webkit-scrollbar-thumb { background: #4FC3F7; border-radius: 5px; }
 
-.ach-item {
-    width: 566px; height: 92px; margin: 0 auto 10px auto; position: relative;
-    background-image: url('images/02_achievement/ach_bg.png'); background-size: 100% 100%;
+/* Grid 修正 */
+.ach-item { 
+    width: 566px; height: 92px; margin: 0 auto 10px auto; position: relative; 
+    background-image: url('images/02_achievement/ach_bg.png'); background-size: 100% 100%; 
     display: grid; 
-    /* 恢復你喜歡的 Grid */
-    grid-template-columns: 90px 150px 200px 1fr; 
-    align-items: center;
+    /* Icon | Title | Desc | Status */
+    grid-template-columns: 80px 170px 220px 1fr; 
+    align-items: center; 
 }
-.ach-col-icon { display: flex; justify-content: center; align-items: center; padding-left: 10px; }
-.ach-col-icon img { width: 70px; height: 70px; object-fit: contain; }
-.ach-col-title { font-size: 24px; font-weight: 900; color: #fff; padding-left: 20px; text-align: left; text-shadow: 0px 0px 2px rgba(0,0,0,0.5); }
-.ach-col-desc { font-size: 14px; line-height: 1.4; color: #eceff1; text-align: left; padding-left: 80px; }
-.ach-col-status { height: 100%; display: flex; justify-content: center; align-items: center; padding-right: 10px; }
-.ach-col-status img { width: auto; height: 60%; object-fit: contain; }
+.ach-item.completed { background-image: url('images/02_achievement/ach_finish_bg.png'); }
+.ach-col-icon { display: flex; justify-content: center; }
+.ach-col-icon img { width: 60px; height: 60px; object-fit: contain; transform: none; }
+.ach-col-title { font-size: 24px; font-weight: 900; color: #fff; padding-left: 10px; text-align: left; }
+.ach-col-desc { font-size: 14px; line-height: 1.4; color: #eceff1; text-align: left; padding-left: 10px; }
+.ach-col-status { display: flex; justify-content: center; padding-right: 15px; }
+.ach-col-status img { width: auto; height: 50%; object-fit: contain; }
 
-/* 4. 演化圖鑑 (書本) */
+/* 4. 演化圖鑑 */
 .book-container { width: 890px; height: 570px; position: relative; display: flex; justify-content: center; align-items: center; }
 .book-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 .page-left { position: absolute; top: 30px; left: 40px; width: 350px; height: 470px; }
 .page-right { position: absolute; top: 30px; left: 440px; width: 350px; height: 470px; }
 .book-grid-layout { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 6px; height: 100%; align-content: start; }
 .book-item { width: 100%; height: 100%; aspect-ratio: 97 / 128; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+.title-card { background-color: #E0C7A5; border-radius: 6px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 .title-card img { width: 100%; height: auto; filter: contrast(1.2); }
 .item-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
 .item-creature { position: relative; z-index: 1; width: 85%; height: 65%; object-fit: contain; margin-top: 8px; transition: transform 0.4s; }
 .book-item:hover .item-creature { transform: translateY(-4px) scale(1); }
 .item-info { position: absolute; z-index: 1; bottom: 1px; width: 100%; text-align: center; display: flex; justify-content: center; align-items: baseline; gap: 10px; }
-.num-text { color: #bd8867; font-size: 30px; font-weight: 900; opacity: 0.5; }
-.name-text { color: #795a50; font-size: 20px; font-weight: 900; }
+.num-text { color: #bd8867; font-size: 30px; font-weight: 900; opacity: 0.5; font-family: 'Arial Black', sans-serif; }
+.name-text { color: #795a50; font-size: 20px; font-weight: 900; letter-spacing: 1px; }
 .book-item.locked .item-creature, .book-item.locked .item-info { display: none; }
 
-/* 5. 遊戲結束 */
-.modal-content-small { width: 425px; height: 420px; position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 40px; }
-.modal-bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; z-index: -1; }
-.modal-btn-group { display: flex; gap: 30px; }
-.popup-btn { width: 94px; height: 94px; }
+/* 目標彈窗 */
+.target-content-centered { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center; }
+.target-icon-box { width: 140px; height: 140px; margin: 0 auto; display: flex; justify-content: center; align-items: center; }
+.target-icon-box img { width: 100%; height: 100%; object-fit: contain; }
 
-@keyframes pop { 0% {transform: scale(0);} 80% {transform: scale(1.1);} 100% {transform: scale(1);} }
-@keyframes float { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-8px);} }
+.shake-anim { animation: shakeRoar 0.2s infinite alternate; transform-origin: center center; }
+@keyframes shakeRoar { 0% { transform: scale(1); } 100% { transform: scale(1.1) rotate(3deg); } }
+
+/* 勝利動畫 */
+.complete-creature-box { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; }
+.complete-creature-box img { width: 100%; height: 100%; object-fit: contain; animation: bounceFast 0.3s infinite; }
+@keyframes bounceFast { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* 彩帶 (無限持續) */
+#confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: hidden; }
+.confetti { position: absolute; width: 12px; height: 12px; animation: fall linear infinite; } /* 加上 infinite */
+@keyframes fall { to { transform: translateY(640px) rotate(360deg); } }
+
+/* 失敗畫面 (固定尺寸) */
+.fail-window { width: 425px; height: 391px; padding-bottom: 20px; }
+.fail-anim-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; display: flex; justify-content: center; align-items: center; }
+.alien-fail-anim { width: 80%; opacity: 0.2; }
+
+/* 動畫 */
+@keyframes float { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-10px);} }
+@keyframes explodeAnim { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
