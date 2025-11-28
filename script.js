@@ -8,38 +8,52 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resizeGame);
     resizeGame();
 
-    // 讀取歷史最高紀錄 (用於圖鑑永久解鎖)
+    // 資料
     let maxTileEver = parseInt(localStorage.getItem('darwin_max_tile')) || 2;
+    
+    const tileImages = {
+        2: 'images/03_evolution/n2.png', 4: 'images/03_evolution/n4.png', 8: 'images/03_evolution/n8.png',
+        16: 'images/03_evolution/n16.png', 32: 'images/03_evolution/n32.png', 64: 'images/03_evolution/n64.png',
+        128: 'images/03_evolution/n128.png', 256: 'images/03_evolution/n256.png', 512: 'images/03_evolution/n512.png',
+        1024: 'images/03_evolution/n1024.png', 2048: 'images/03_evolution/n2048.png', 4096: 'images/03_evolution/n4096.png',
+        8192: 'images/03_evolution/n8192.png', 16384: 'images/03_evolution/n16384.png', 32768: 'images/03_evolution/n32768.png',
+        65536: 'images/03_evolution/n65536.png', 131072: 'images/03_evolution/n131072.png'
+    };
+    const evolutionData = [
+        { val: 2, name: "原蟲" }, { val: 4, name: "軟體" }, { val: 8, name: "甲殼" }, { val: 16, name: "魚類" },
+        { val: 32, name: "兩棲" }, { val: 64, name: "爬蟲" }, { val: 128, name: "囓齒" }, { val: 256, name: "哺乳" },
+        { val: 512, name: "靈長" }, { val: 1024, name: "野人" }, { val: 2048, name: "人類" }, { val: 4096, name: "天才" },
+        { val: 8192, name: "喪屍" }, { val: 16384, name: "進化" }, { val: 32768, name: "生化" }, { val: 65536, name: "外星" },
+        { val: 131072, name: "神" }
+    ];
 
     // 音效
     const bgMusic = document.getElementById('bg-music');
     const sfxClick = document.getElementById('sfx-click');
     const sfxMerge = document.getElementById('sfx-merge');
-    const sfxVolcano = document.getElementById('sfx-volcano'); // 火山專用
-    const sfxFail = document.getElementById('sfx-fail');       // 失敗專用
+    const sfxVolcano = document.getElementById('sfx-volcano');
+    const sfxFail = document.getElementById('sfx-fail');
     const sfxWin = document.getElementById('sfx-win');
-    
-    const btnToggleSound = document.getElementById('btn-toggle-sound');
-    const imgSound = document.getElementById('img-sound');
     let isSoundOn = true;
 
     function playSfx(audio) { if(isSoundOn && audio) { audio.currentTime=0; audio.play().catch(()=>{}); } }
-
+    
     document.body.addEventListener('click', (e) => {
         if (e.target.closest('.hover-effect') || e.target.closest('.level-btn-wrap')) playSfx(sfxClick);
         if(isSoundOn && bgMusic.paused) bgMusic.play().catch(()=>{});
     }, { capture: true });
 
+    const btnToggleSound = document.getElementById('btn-toggle-sound');
     if(btnToggleSound) {
         btnToggleSound.addEventListener('click', (e) => {
             e.stopPropagation();
             isSoundOn = !isSoundOn;
-            imgSound.src = isSoundOn ? "images/01_lobby/btn_sound_on.png" : "images/01_lobby/btn_sound_off.png";
+            document.getElementById('img-sound').src = isSoundOn ? "images/01_lobby/btn_sound_on.png" : "images/01_lobby/btn_sound_off.png";
             if(isSoundOn) bgMusic.play(); else bgMusic.pause();
         });
     }
 
-    // UI
+    // UI & Modal
     const globalIcons = document.getElementById('global-icons');
     const modalAchieve = document.getElementById('modal-achievement');
     const modalHelp = document.getElementById('modal-help');
@@ -75,14 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
         newEl: ['1','2','3','4'].map(i => `images/04_game/alien_new_element/alien_new_element${i}.png`)
     };
     const godChar = document.getElementById('god-character');
-    let godIdleInterval, godAnimTimer;
-    let isAnimating = false;
+    let godIdleInterval, godAnimTimer, isAnimating = false;
 
     function startGodIdle() {
         clearInterval(godIdleInterval);
-        godIdleInterval = setInterval(() => {
-            if(!isAnimating) playGodSequence(godStates.random);
-        }, 4000);
+        godIdleInterval = setInterval(() => { if(!isAnimating) playGodSequence(godStates.random); }, 4000);
     }
     function stopGodIdle() { clearInterval(godIdleInterval); }
 
@@ -96,45 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 frame++;
                 godAnimTimer = setTimeout(nextFrame, 200);
             } else {
-                if(!modalGameOver.classList.contains('hidden')) {
-                     // 失敗時停在最後一張
-                     godChar.src = godStates.fail[3];
-                } else if(!modalComplete.classList.contains('hidden')) {
-                     // 勝利時停在最後一張
-                     godChar.src = godStates.victory[3];
-                } else {
-                     godChar.src = godStates.idle;
-                }
+                if(!modalGameOver.classList.contains('hidden')) godChar.src = godStates.fail[3];
+                else if(!modalComplete.classList.contains('hidden')) godChar.src = godStates.victory[3];
+                else godChar.src = godStates.idle;
                 isAnimating = false;
             }
         }
         nextFrame();
     }
 
-    // 資料
-    const tileImages = {
-        2: 'images/03_evolution/n2.png', 4: 'images/03_evolution/n4.png', 8: 'images/03_evolution/n8.png',
-        16: 'images/03_evolution/n16.png', 32: 'images/03_evolution/n32.png', 64: 'images/03_evolution/n64.png',
-        128: 'images/03_evolution/n128.png', 256: 'images/03_evolution/n256.png', 512: 'images/03_evolution/n512.png',
-        1024: 'images/03_evolution/n1024.png', 2048: 'images/03_evolution/n2048.png', 4096: 'images/03_evolution/n4096.png',
-        8192: 'images/03_evolution/n8192.png', 16384: 'images/03_evolution/n16384.png', 32768: 'images/03_evolution/n32768.png',
-        65536: 'images/03_evolution/n65536.png', 131072: 'images/03_evolution/n131072.png'
-    };
-    const evolutionData = [
-        { val: 2, name: "原蟲" }, { val: 4, name: "軟體" }, { val: 8, name: "甲殼" }, { val: 16, name: "魚類" },
-        { val: 32, name: "兩棲" }, { val: 64, name: "爬蟲" }, { val: 128, name: "囓齒" }, { val: 256, name: "哺乳" },
-        { val: 512, name: "靈長" }, { val: 1024, name: "野人" }, { val: 2048, name: "人類" }, { val: 4096, name: "天才" },
-        { val: 8192, name: "喪屍" }, { val: 16384, name: "進化" }, { val: 32768, name: "生化" }, { val: 65536, name: "外星" },
-        { val: 131072, name: "神" }
-    ];
-
-    let maxLevelUnlocked = 1;
-    let currentLevel = 1;
-    let targetTile = 2048;
-    let gameMode = 'endless';
-    let board = [], score = 0, moves = 0, maxTile = 2;
-    let prevBoard = null;
-    const size = 4;
+    // 遊戲變數
+    let maxLevelUnlocked = 1, currentLevel = 1, targetTile = 2048;
+    let gameMode = 'endless', board = [], score = 0, moves = 0, maxTile = 2;
+    let prevBoard = null; const size = 4;
 
     document.getElementById('btn-normal').addEventListener('click', () => {
         document.getElementById('start-screen').classList.remove('active');
@@ -156,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let cls = 'level-btn-wrap locked';
             if (i < maxLevelUnlocked) { bgSrc = 'images/05_level/lvl_icon_clear.png'; cls = 'level-btn-wrap'; }
             else if (i === maxLevelUnlocked) { bgSrc = 'images/05_level/lvl_icon_open.png'; cls = 'level-btn-wrap'; }
+            
             btn.className = cls;
             btn.innerHTML = `<img src="${bgSrc}" class="level-btn-bg"><span class="level-num">${i.toString().padStart(2,'0')}</span>`;
             if (i <= maxLevelUnlocked) btn.onclick = () => showTargetPopup(i);
@@ -173,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTarget.classList.remove('hidden');
     }
 
-    document.getElementById('btn-target-menu').onclick = () => modalTarget.classList.add('hidden');
+    document.getElementById('btn-target-menu').onclick = () => { modalTarget.classList.add('hidden'); levelScreen.classList.remove('active'); goHome(); };
     document.getElementById('btn-target-start').onclick = () => {
         modalTarget.classList.add('hidden');
         levelScreen.classList.remove('active');
@@ -184,14 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-fail-menu').onclick = goHome;
     document.getElementById('btn-fail-retry').onclick = () => { modalGameOver.classList.add('hidden'); initBoard(); };
     document.getElementById('btn-comp-menu').onclick = goHome;
-    document.getElementById('btn-comp-retry').onclick = () => { 
-        modalComplete.classList.add('hidden'); 
-        stopConfetti(); 
-        initBoard(); 
-    };
+    document.getElementById('btn-comp-retry').onclick = () => { modalComplete.classList.add('hidden'); stopConfetti(); initBoard(); };
     document.getElementById('btn-comp-next').onclick = () => {
-        modalComplete.classList.add('hidden');
-        stopConfetti();
+        modalComplete.classList.add('hidden'); stopConfetti();
         if(maxLevelUnlocked < 10) { maxLevelUnlocked++; if(currentLevel < 10) currentLevel++; }
         showTargetPopup(currentLevel);
     };
@@ -208,9 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function goHome() {
-        isInGame = false;
-        stopGodIdle();
-        stopConfetti();
+        isInGame = false; stopGodIdle(); stopConfetti();
         document.getElementById('game-screen').classList.remove('active');
         document.getElementById('start-screen').classList.add('active');
         modalGameOver.classList.add('hidden');
@@ -245,12 +224,11 @@ document.addEventListener('DOMContentLoaded', () => {
         board.forEach(v => {
             const t = document.createElement('div'); t.className = 'tile';
             if(v>0) {
-                // 檢查是否需要更新歷史最高紀錄
                 if(v > maxTile) maxTile = v;
                 if(v > maxTileEver) {
                     maxTileEver = v;
                     localStorage.setItem('darwin_max_tile', maxTileEver);
-                    updateEvolutionBook(); // 更新圖鑑
+                    updateEvolutionBook();
                 }
                 t.innerHTML = `<div class="tile-inner" style="background-image:url('${tileImages[v]}')"></div>`;
             }
@@ -259,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAchievementList();
     }
 
+    // 技能
     document.getElementById('btn-undo').onclick = () => {
         if(!prevBoard || score < 100) return;
         score -= 100; board = [...prevBoard]; updateUI();
@@ -267,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(score < 500) return;
         let targets = board.map((v,i)=>(v>0&&v<=8)?i:-1).filter(i=>i!==-1);
         if(!targets.length) return;
-        score -= 500; playSfx(sfxVolcano); // 使用新音效ID
+        score -= 500; playSfx(sfxVolcano);
         const layer = document.getElementById('explosion-layer');
         layer.innerHTML = '';
         for(let i=0; i<4; i++) {
@@ -287,15 +266,13 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUI();
     };
 
+    // 核心邏輯
     function move(dir) {
-        // 如果遊戲結束，禁止操作
         if(!modalComplete.classList.contains('hidden') || !modalGameOver.classList.contains('hidden')) return;
-
         prevBoard = [...board];
         let moved = false;
         let temp = [...board];
         let currentMax = maxTile;
-        
         const rotate = (b) => { let n=Array(16).fill(0); for(let r=0;r<4;r++) for(let c=0;c<4;c++) n[c*4+(3-r)] = b[r*4+c]; return n; };
         let rots = 0;
         if(dir==='left') rots=2; if(dir==='up') rots=1; if(dir==='down') rots=3;
@@ -360,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const c = document.getElementById('confetti-container');
         c.innerHTML = '';
         const colors = ['#d03269', '#f8c846', '#0d98bc', '#38b81c', '#7346b4', '#db6738'];
-        // 持續生成
         confettiInterval = setInterval(() => {
             const p = document.createElement('div');
             p.className = 'confetti';
@@ -368,7 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
             p.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
             p.style.animationDuration = (Math.random()*1.5+1) + 's';
             c.appendChild(p);
-            // 清理 DOM
             setTimeout(() => p.remove(), 2500);
         }, 100);
     }
@@ -379,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!list) return; list.innerHTML = '';
         const achs = [{t:"生命的火花",d:"合成單細胞",g:2},{t:"陸地霸主",d:"演化出恐龍",g:64},{t:"智慧曙光",d:"演化出野人",g:1024},{t:"機械飛昇",d:"成為生化人",g:32768},{t:"創世之神",d:"達到頂點",g:131072}];
         achs.forEach(a => {
-            // 成就判斷可以改為 maxTileEver 比較合理，代表曾經達成過
             const done = maxTileEver >= a.g; 
             const cls = done ? 'ach-item completed' : 'ach-item';
             const st = done ? 'images/02_achievement/ach_finish_img.png' : 'images/02_achievement/ach_img.png';
@@ -389,9 +363,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateEvolutionBook() {
         const left = document.getElementById('evo-grid-left');
         const right = document.getElementById('evo-grid-right');
-        if(!left) return; left.innerHTML = `<div class="book-item title-card"><img src="images/03_evolution/help_txt.png"></div>`; right.innerHTML = '';
+        if(!left) return;
+        left.innerHTML = `<div class="book-item title-card"><img src="images/03_evolution/help_txt.png"></div>`;
+        right.innerHTML = '';
         evolutionData.forEach((item, i) => {
-            // ★ 使用 maxTileEver 判斷解鎖
             const unlocked = maxTileEver >= item.val;
             const num = (i+1).toString().padStart(2,'0');
             const w = document.createElement('div');
@@ -428,4 +403,11 @@ document.addEventListener('DOMContentLoaded', () => {
             else { if(Math.abs(dy)>30) move(dy>0?'down':'up'); }
         });
     }
+    
+    // 結算按鈕
+    document.getElementById('btn-modal-close').addEventListener('click', goHome);
+    document.getElementById('btn-modal-retry').addEventListener('click', () => {
+        modalGameOver.classList.add('hidden');
+        initBoard();
+    });
 });
