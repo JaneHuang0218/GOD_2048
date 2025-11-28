@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     
+    // 1. 自動縮放
     function resizeGame() {
         const container = document.getElementById('game-container');
         const scale = Math.min(window.innerWidth / 1386, window.innerHeight / 640);
@@ -8,52 +9,40 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resizeGame);
     resizeGame();
 
-    // 資料
+    // 讀取歷史最高紀錄
     let maxTileEver = parseInt(localStorage.getItem('darwin_max_tile')) || 2;
-    
-    const tileImages = {
-        2: 'images/03_evolution/n2.png', 4: 'images/03_evolution/n4.png', 8: 'images/03_evolution/n8.png',
-        16: 'images/03_evolution/n16.png', 32: 'images/03_evolution/n32.png', 64: 'images/03_evolution/n64.png',
-        128: 'images/03_evolution/n128.png', 256: 'images/03_evolution/n256.png', 512: 'images/03_evolution/n512.png',
-        1024: 'images/03_evolution/n1024.png', 2048: 'images/03_evolution/n2048.png', 4096: 'images/03_evolution/n4096.png',
-        8192: 'images/03_evolution/n8192.png', 16384: 'images/03_evolution/n16384.png', 32768: 'images/03_evolution/n32768.png',
-        65536: 'images/03_evolution/n65536.png', 131072: 'images/03_evolution/n131072.png'
-    };
-    const evolutionData = [
-        { val: 2, name: "原蟲" }, { val: 4, name: "軟體" }, { val: 8, name: "甲殼" }, { val: 16, name: "魚類" },
-        { val: 32, name: "兩棲" }, { val: 64, name: "爬蟲" }, { val: 128, name: "囓齒" }, { val: 256, name: "哺乳" },
-        { val: 512, name: "靈長" }, { val: 1024, name: "野人" }, { val: 2048, name: "人類" }, { val: 4096, name: "天才" },
-        { val: 8192, name: "喪屍" }, { val: 16384, name: "進化" }, { val: 32768, name: "生化" }, { val: 65536, name: "外星" },
-        { val: 131072, name: "神" }
-    ];
 
-    // 音效
+    // 2. 音樂與音效
     const bgMusic = document.getElementById('bg-music');
     const sfxClick = document.getElementById('sfx-click');
     const sfxMerge = document.getElementById('sfx-merge');
     const sfxVolcano = document.getElementById('sfx-volcano');
     const sfxFail = document.getElementById('sfx-fail');
     const sfxWin = document.getElementById('sfx-win');
+    
+    const btnToggleSound = document.getElementById('btn-toggle-sound');
+    const imgSound = document.getElementById('img-sound');
+    const imgGameSound = document.getElementById('img-game-sound');
     let isSoundOn = true;
 
     function playSfx(audio) { if(isSoundOn && audio) { audio.currentTime=0; audio.play().catch(()=>{}); } }
-    
+
     document.body.addEventListener('click', (e) => {
         if (e.target.closest('.hover-effect') || e.target.closest('.level-btn-wrap')) playSfx(sfxClick);
         if(isSoundOn && bgMusic.paused) bgMusic.play().catch(()=>{});
     }, { capture: true });
 
-    const btnToggleSound = document.getElementById('btn-toggle-sound');
-    if(btnToggleSound) {
-        btnToggleSound.addEventListener('click', (e) => {
-            e.stopPropagation();
-            isSoundOn = !isSoundOn;
-            document.getElementById('img-sound').src = isSoundOn ? "images/01_lobby/btn_sound_on.png" : "images/01_lobby/btn_sound_off.png";
-            if(isSoundOn) bgMusic.play(); else bgMusic.pause();
-        });
+    function toggleSoundState(e) {
+        if(e) e.stopPropagation();
+        isSoundOn = !isSoundOn;
+        const path = isSoundOn ? "images/01_lobby/btn_sound_on.png" : "images/01_lobby/btn_sound_off.png";
+        if(imgSound) imgSound.src = path;
+        if(imgGameSound) imgGameSound.src = path;
+        if(isSoundOn) bgMusic.play(); else bgMusic.pause();
     }
-
-    // UI & Modal
+    if(btnToggleSound) btnToggleSound.addEventListener('click', toggleSoundState);
+    
+    // 3. UI 與 彈窗
     const globalIcons = document.getElementById('global-icons');
     const modalAchieve = document.getElementById('modal-achievement');
     const modalHelp = document.getElementById('modal-help');
@@ -61,6 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const levelScreen = document.getElementById('level-select-screen');
     const modalComplete = document.getElementById('modal-complete');
     const modalGameOver = document.getElementById('modal-gameover');
+    
+    // 遊戲內按鈕
+    const btnGameSound = document.getElementById('btn-game-sound');
+    if(btnGameSound) btnGameSound.addEventListener('click', toggleSoundState);
+
     let isInGame = false;
 
     function toggleModal(targetModal) {
@@ -79,6 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-open-achievement').addEventListener('click', () => { updateAchievementList(); toggleModal(modalAchieve); });
     document.getElementById('btn-open-help').addEventListener('click', () => { updateEvolutionBook(); toggleModal(modalHelp); });
     document.getElementById('btn-close-achievement').addEventListener('click', () => toggleModal(modalAchieve));
+    
+    // 遊戲內按鈕開啟說明
+    const btnGameHelp = document.getElementById('btn-game-help');
+    if(btnGameHelp) btnGameHelp.addEventListener('click', () => { updateEvolutionBook(); toggleModal(modalHelp); });
 
     // 上帝動畫
     const godStates = { 
@@ -116,11 +114,32 @@ document.addEventListener('DOMContentLoaded', () => {
         nextFrame();
     }
 
-    // 遊戲變數
-    let maxLevelUnlocked = 1, currentLevel = 1, targetTile = 2048;
-    let gameMode = 'endless', board = [], score = 0, moves = 0, maxTile = 2;
-    let prevBoard = null; const size = 4;
+    // 資料
+    const tileImages = {
+        2: 'images/03_evolution/n2.png', 4: 'images/03_evolution/n4.png', 8: 'images/03_evolution/n8.png',
+        16: 'images/03_evolution/n16.png', 32: 'images/03_evolution/n32.png', 64: 'images/03_evolution/n64.png',
+        128: 'images/03_evolution/n128.png', 256: 'images/03_evolution/n256.png', 512: 'images/03_evolution/n512.png',
+        1024: 'images/03_evolution/n1024.png', 2048: 'images/03_evolution/n2048.png', 4096: 'images/03_evolution/n4096.png',
+        8192: 'images/03_evolution/n8192.png', 16384: 'images/03_evolution/n16384.png', 32768: 'images/03_evolution/n32768.png',
+        65536: 'images/03_evolution/n65536.png', 131072: 'images/03_evolution/n131072.png'
+    };
+    const evolutionData = [
+        { val: 2, name: "原蟲" }, { val: 4, name: "軟體" }, { val: 8, name: "甲殼" }, { val: 16, name: "魚類" },
+        { val: 32, name: "兩棲" }, { val: 64, name: "爬蟲" }, { val: 128, name: "囓齒" }, { val: 256, name: "哺乳" },
+        { val: 512, name: "靈長" }, { val: 1024, name: "野人" }, { val: 2048, name: "人類" }, { val: 4096, name: "天才" },
+        { val: 8192, name: "喪屍" }, { val: 16384, name: "進化" }, { val: 32768, name: "生化" }, { val: 65536, name: "外星" },
+        { val: 131072, name: "神" }
+    ];
 
+    let maxLevelUnlocked = 1;
+    let currentLevel = 1;
+    let targetTile = 2048;
+    let gameMode = 'endless';
+    let board = [], score = 0, moves = 0, maxTile = 2;
+    let prevBoard = null;
+    const size = 4;
+
+    // 4. 關卡選擇
     document.getElementById('btn-normal').addEventListener('click', () => {
         document.getElementById('start-screen').classList.remove('active');
         levelScreen.classList.add('active');
@@ -141,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let cls = 'level-btn-wrap locked';
             if (i < maxLevelUnlocked) { bgSrc = 'images/05_level/lvl_icon_clear.png'; cls = 'level-btn-wrap'; }
             else if (i === maxLevelUnlocked) { bgSrc = 'images/05_level/lvl_icon_open.png'; cls = 'level-btn-wrap'; }
-            
             btn.className = cls;
             btn.innerHTML = `<img src="${bgSrc}" class="level-btn-bg"><span class="level-num">${i.toString().padStart(2,'0')}</span>`;
             if (i <= maxLevelUnlocked) btn.onclick = () => showTargetPopup(i);
@@ -154,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let goal = Math.pow(2, level + 2);
         if(goal > 131072) goal = 131072;
         targetTile = goal;
-        const item = evolutionData.find(e => e.val === goal) || evolutionData[0];
         document.getElementById('target-img').src = tileImages[goal];
         modalTarget.classList.remove('hidden');
     }
@@ -166,11 +183,14 @@ document.addEventListener('DOMContentLoaded', () => {
         startGame('normal', targetTile);
     };
 
+    // 5. 遊戲流程與技能
     document.getElementById('btn-back-home').onclick = goHome;
     document.getElementById('btn-fail-menu').onclick = goHome;
     document.getElementById('btn-fail-retry').onclick = () => { modalGameOver.classList.add('hidden'); initBoard(); };
     document.getElementById('btn-comp-menu').onclick = goHome;
-    document.getElementById('btn-comp-retry').onclick = () => { modalComplete.classList.add('hidden'); stopConfetti(); initBoard(); };
+    document.getElementById('btn-comp-retry').onclick = () => { 
+        modalComplete.classList.add('hidden'); stopConfetti(); initBoard(); 
+    };
     document.getElementById('btn-comp-next').onclick = () => {
         modalComplete.classList.add('hidden'); stopConfetti();
         if(maxLevelUnlocked < 10) { maxLevelUnlocked++; if(currentLevel < 10) currentLevel++; }
@@ -189,7 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function goHome() {
-        isInGame = false; stopGodIdle(); stopConfetti();
+        isInGame = false;
+        stopGodIdle(); stopConfetti();
         document.getElementById('game-screen').classList.remove('active');
         document.getElementById('start-screen').classList.add('active');
         modalGameOver.classList.add('hidden');
@@ -237,36 +258,57 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAchievementList();
     }
 
-    // 技能
+    // 技能按鈕
     document.getElementById('btn-undo').onclick = () => {
-        if(!prevBoard || score < 100) return;
+        if(!prevBoard || score < 100) { showGodDialog("分數不足或無法後悔"); return; }
         score -= 100; board = [...prevBoard]; updateUI();
+        showScoreEffect(100);
     };
     document.getElementById('btn-volcano').onclick = () => {
-        if(score < 500) return;
+        if(score < 500) { showGodDialog("分數不足 (-500)"); return; }
         let targets = board.map((v,i)=>(v>0&&v<=8)?i:-1).filter(i=>i!==-1);
-        if(!targets.length) return;
+        if(!targets.length) { showGodDialog("無低階生物"); return; }
         score -= 500; playSfx(sfxVolcano);
-        const layer = document.getElementById('explosion-layer');
-        layer.innerHTML = '';
+        
+        // 爆炸特效
+        const bg = document.querySelector('.playfield-bg');
+        targets.slice(0, 4).forEach(idx => {
+            let r = Math.floor(Math.random()*targets.length); // 修正隨機邏輯
+        });
+        // 簡單隨機刪除 4 個
         for(let i=0; i<4; i++) {
             if(targets.length) {
                 let r = Math.floor(Math.random()*targets.length);
                 let idx = targets[r];
                 let row = Math.floor(idx/4), col = idx%4;
+                
                 const boom = document.createElement('div');
                 boom.className = 'explode-effect';
-                boom.style.top = (row*(116+8)) + 'px';
-                boom.style.left = (col*(116+8)) + 'px';
-                layer.appendChild(boom);
+                // 計算位置: padding-left + col*(size+gap)
+                boom.style.left = (122 + col*(116+8)) + 'px';
+                boom.style.top = (91 + row*(116+8)) + 'px';
+                bg.appendChild(boom);
+                setTimeout(()=>boom.remove(), 500);
+
                 board[idx] = 0; targets.splice(r, 1);
             }
         }
-        setTimeout(() => layer.innerHTML = '', 600);
+        showScoreEffect(500);
         updateUI();
     };
 
-    // 核心邏輯
+    function showGodDialog(msg) {
+        const d = document.getElementById('god-dialog');
+        d.innerText = msg; d.classList.remove('hidden');
+        setTimeout(()=>d.classList.add('hidden'), 1500);
+    }
+    function showScoreEffect(val) {
+        const ef = document.getElementById('score-effect');
+        ef.innerText = `-${val}`;
+        ef.style.animation='none'; ef.offsetHeight; ef.style.animation='floatUp 1s forwards';
+    }
+
+    // 6. 核心移動
     function move(dir) {
         if(!modalComplete.classList.contains('hidden') || !modalGameOver.classList.contains('hidden')) return;
         prevBoard = [...board];
@@ -387,20 +429,59 @@ document.addEventListener('DOMContentLoaded', () => {
             if(e.key==='ArrowUp') move('up'); if(e.key==='ArrowDown') move('down');
         }
     });
+
+    // ★★★ 手機滑動控制 (單體拖曳特效) ★★★
     const grid = document.getElementById('grid-container');
-    let tx=0, ty=0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let activeTile = null; // 記錄手指按住的方塊
+
     if(grid) {
-        grid.addEventListener('touchstart', e => { tx=e.touches[0].clientX; ty=e.touches[0].clientY; grid.style.transition='none'; }, {passive:false});
-        grid.addEventListener('touchmove', e => { 
-            e.preventDefault(); 
-            let dx=e.touches[0].clientX-tx, dy=e.touches[0].clientY-ty;
-            grid.style.transform = `translate(${Math.max(-15, Math.min(15, dx))}px, ${Math.max(-15, Math.min(15, dy))}px)`;
-        }, {passive:false});
+        // 1. 按下：鎖定該方塊
+        grid.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            const target = e.target.closest('.tile-inner');
+            if (target) {
+                activeTile = target;
+                activeTile.style.transition = 'none'; // 移除過渡以便跟隨手指
+            }
+        }, {passive: false});
+
+        // 2. 移動：只移動該方塊
+        grid.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (activeTile) {
+                let dx = e.touches[0].clientX - touchStartX;
+                let dy = e.touches[0].clientY - touchStartY;
+                
+                // 限制最大拉動距離 20px (彈性手感)
+                const limit = 20;
+                let tx = Math.max(-limit, Math.min(limit, dx));
+                let ty = Math.max(-limit, Math.min(limit, dy));
+                
+                activeTile.style.transform = `translate(${tx}px, ${ty}px)`;
+            }
+        }, {passive: false});
+
+        // 3. 放開：彈回並觸發移動
         grid.addEventListener('touchend', e => {
-            grid.style.transition='transform 0.2s'; grid.style.transform='translate(0,0)';
-            let dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
-            if(Math.abs(dx)>Math.abs(dy)) { if(Math.abs(dx)>30) move(dx>0?'right':'left'); }
-            else { if(Math.abs(dy)>30) move(dy>0?'down':'up'); }
+            if (activeTile) {
+                activeTile.style.transition = 'transform 0.2s ease-out';
+                activeTile.style.transform = 'translate(0, 0)'; // 歸位
+                activeTile = null;
+            }
+
+            let touchEndX = e.changedTouches[0].clientX;
+            let touchEndY = e.changedTouches[0].clientY;
+            let dx = touchEndX - touchStartX;
+            let dy = touchEndY - touchStartY;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (Math.abs(dx) > 30) move(dx > 0 ? 'right' : 'left');
+            } else {
+                if (Math.abs(dy) > 30) move(dy > 0 ? 'down' : 'up');
+            }
         });
     }
     
