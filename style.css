@@ -14,9 +14,9 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
 .icon-btn { width: 75px; } 
 
 /* 1. 大廳 (Logo 加快) */
-.lobby-logo { position: absolute; top: 30px; left: 0; right: 0; margin: 0 auto; width: 594px; z-index: 2; animation: float 1.5s infinite ease-in-out; }
+.lobby-logo { position: absolute; top: 45px; left: 0; right: 0; margin: 0 auto; width: 594px; z-index: 2; animation: float 0.8s infinite ease-in-out; }
 .lobby-buttons { position: absolute; bottom: 120px; left: 0; right: 0; margin: 0 auto; display: flex; justify-content: center; gap: 40px; z-index: 2; width: fit-content; }
-.img-btn { width: 205px; }
+.img-btn { width: 210px; }
 
 /* 1.5 關卡選擇 */
 .level-popup { width: 659px; height: 507px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; justify-content: center; align-items: center; }
@@ -49,9 +49,9 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
 .info-group { display: flex; flex-direction: column; gap: 15px; z-index: 1; margin-bottom: 20px; }
 .stat-box { width: 305px; height: 108px; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; padding-top: 0px; box-sizing: border-box; position: relative; }
 .stat-box span { 
-    font-size: 48px; /* 44px -> 48px */
+    font-size: 60px;
     color: #fff; font-weight: 900; font-family: monospace; 
-    margin-top: -10px; /* 再往上推 */
+    margin-top: -22px; /* 再往上推 */
 }
 .score-effect { position: absolute; top: -20px; right: 10px; color: #ff5252; font-weight: bold; font-size: 24px; opacity: 0; z-index: 10; }
 
@@ -68,8 +68,8 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
 .popup-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 .close-btn { position: absolute; top: 15px; right: 15px; width: 50px; height: 50px; }
 
-.achievement-list { width: 600px; height: 430px; margin-top: 85px; margin-left: auto; margin-right: auto; overflow-y: auto; padding-right: 10px; }
-.achievement-list::-webkit-scrollbar { width: 10px; }
+.achievement-list { width: 650px; height: 430px; margin-top: 85px; margin-left: auto; margin-right: auto; overflow-y: auto; padding-right: 10px; }
+.achievement-list::-webkit-scrollbar { width: 12px; }
 .achievement-list::-webkit-scrollbar-thumb { background: #4FC3F7; border-radius: 5px; }
 
 /* Grid 修正 */
@@ -78,7 +78,7 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
     background-image: url('images/02_achievement/ach_bg.png'); background-size: 100% 100%; 
     display: grid; 
     /* Icon | Title | Desc | Status */
-    grid-template-columns: 80px 170px 220px 1fr; 
+    grid-template-columns: 100px 220px 120px 1fr; 
     align-items: center; 
 }
 .ach-item.completed { background-image: url('images/02_achievement/ach_finish_bg.png'); }
@@ -101,9 +101,9 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
 .item-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
 .item-creature { position: relative; z-index: 1; width: 85%; height: 65%; object-fit: contain; margin-top: 8px; transition: transform 0.4s; }
 .book-item:hover .item-creature { transform: translateY(-4px) scale(1); }
-.item-info { position: absolute; z-index: 1; bottom: 1px; width: 100%; text-align: center; display: flex; justify-content: center; align-items: baseline; gap: 10px; }
+.item-info { position: absolute; z-index: 1; bottom: -5px; width: 100%; text-align: center; display: flex; justify-content: center; align-items: center; gap: 11px; }
 .num-text { color: #bd8867; font-size: 30px; font-weight: 900; opacity: 0.5; font-family: 'Arial Black', sans-serif; }
-.name-text { color: #795a50; font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+.name-text { color: #795a50; font-size: 22px; font-weight: 900; letter-spacing: 1px; }
 .book-item.locked .item-creature, .book-item.locked .item-info { display: none; }
 
 /* 目標彈窗 */
@@ -115,19 +115,19 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
 @keyframes shakeRoar { 0% { transform: scale(1); } 100% { transform: scale(1.1) rotate(3deg); } }
 
 /* 勝利動畫 */
-.complete-creature-box { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; }
+.complete-creature-box { position: absolute; top: 37%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; }
 .complete-creature-box img { width: 100%; height: 100%; object-fit: contain; animation: bounceFast 0.3s infinite; }
 @keyframes bounceFast { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
 /* 彩帶 (無限持續) */
 #confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: hidden; }
-.confetti { position: absolute; width: 12px; height: 12px; animation: fall linear infinite; } /* 加上 infinite */
+.confetti { position: absolute; width: 16px; height: 12px; animation: fall linear infinite; } /* 加上 infinite */
 @keyframes fall { to { transform: translateY(640px) rotate(360deg); } }
 
 /* 失敗畫面 (固定尺寸) */
 .fail-window { width: 425px; height: 391px; padding-bottom: 20px; }
 .fail-anim-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; display: flex; justify-content: center; align-items: center; }
-.alien-fail-anim { width: 80%; opacity: 0.2; }
+.alien-fail-anim { width: 80%; opacity: 0; }
 
 /* 動畫 */
 @keyframes float { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-10px);} }
