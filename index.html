@@ -8,20 +8,23 @@
 </head>
 <body>
 
-    <!-- 音效資源 -->
+    <!-- 音效區 -->
     <audio id="bg-music" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-click"><source src="audio/click.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-merge"><source src="audio/merge.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-skill"><source src="audio/explode.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-win"><source src="audio/win.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-fail"><source src="audio/fail.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-time"><source src="audio/time.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-wave"><source src="audio/wave.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-thunder"><source src="audio/thunder.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-tornado"><source src="audio/tornado.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-frozen"><source src="audio/frozen.mp3" type="audio/mpeg"></audio>
 
-    <!-- 縮放容器 -->
     <div id="game-scale-wrapper">
-        <!-- 遊戲核心畫布 (1386x640) -->
         <div id="game-container">
             
-            <!-- ★ [全域按鈕] 絕對定位在畫布右上角 ★ -->
+            <!-- 全域 UI (右上角) -->
             <div id="global-icons" class="lobby-icons">
                 <button id="btn-open-achievement" class="icon-btn hover-effect">
                     <img src="images/01_lobby/achieve.png" alt="成就">
@@ -74,7 +77,6 @@
                     <img src="images/01_lobby/back.png" onerror="this.src='images/04_game/menu.png'">
                 </button>
 
-                <!-- 遊戲佈局 -->
                 <div class="game-layout-inner">
                     <!-- 左側：棋盤 -->
                     <div class="playfield-area">
@@ -86,7 +88,6 @@
 
                     <!-- 右側：UI 面板 -->
                     <div class="sidebar-area">
-                        <!-- 上帝 -->
                         <div class="god-wrapper">
                             <div id="god-dialog" class="god-dialog hidden">加油！</div>
                             <div class="god-container">
@@ -94,7 +95,6 @@
                             </div>
                         </div>
                         
-                        <!-- 數據看板 -->
                         <div class="info-group">
                             <div class="stat-box" style="background-image: url('images/04_game/action_step.png');">
                                 <span id="moves-display">∞</span>
@@ -105,12 +105,13 @@
                             </div>
                         </div>
 
-                        <!-- 技能按鈕 -->
                         <div class="skills-wrapper">
                             <div class="bottom-skills-grid">
                                 <button class="skill-btn hover-effect" id="skill-undo">
                                     <img src="images/04_game/hourglass.png">
                                     <span class="skill-cost">-300</span>
+                                    <!-- 冷卻遮罩 -->
+                                    <div id="cd-undo" class="cooldown-mask hidden"></div>
                                 </button>
                                 <button class="skill-btn hover-effect" id="skill-wave">
                                     <img src="images/04_game/wave.png">
@@ -133,7 +134,6 @@
                                     <span class="skill-cost red-cost">-2000</span>
                                 </button>
                             </div>
-                            <div id="skill-instruction" class="hidden">請點擊目標方塊</div>
                         </div>
                     </div>
                 </div>
@@ -176,7 +176,7 @@
                     <img src="images/07_target/lvl_target.png" class="popup-bg" onerror="this.src='images/02_achievement/ach_bg.png'">
                     <div class="target-content-centered">
                         <div class="target-icon-box">
-                            <img id="target-img" class="shake-anim" src="images/03_evolution/n1024.png">
+                            <img id="target-img" class="bounce-anim" src="images/03_evolution/n1024.png">
                         </div>
                         <div class="modal-btn-group" style="margin-top: 30px; position: relative; bottom: auto;">
                             <button id="btn-target-menu" class="popup-btn hover-effect">

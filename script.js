@@ -13,10 +13,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const bgMusic = document.getElementById('bg-music');
     const sfxClick = document.getElementById('sfx-click');
     const sfxMerge = document.getElementById('sfx-merge');
-    const sfxSkill = document.getElementById('sfx-skill');
     const sfxWin = document.getElementById('sfx-win');
     const sfxFail = document.getElementById('sfx-fail');
     
+    const sfxTime = document.getElementById('sfx-time');
+    const sfxWave = document.getElementById('sfx-wave');
+    const sfxThunder = document.getElementById('sfx-thunder');
+    const sfxTornado = document.getElementById('sfx-tornado');
+    const sfxFrozen = document.getElementById('sfx-frozen');
+    const sfxExplode = document.getElementById('sfx-skill');
+
     const btnToggleSound = document.getElementById('btn-toggle-sound');
     const imgSound = document.getElementById('img-sound');
     let isSoundOn = true;
@@ -78,10 +84,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const godChar = document.getElementById('god-character');
     let godIdleInterval, godAnimTimer, isAnimating = false;
+    // 有趣的上帝對話
+    const godQuotes = [
+        "這鍋湯好像煮太久了...", "你確定那個不是突變嗎？", "我要不要加點辣椒醬？", "糟糕，手滑了一下...", 
+        "演化論？那是我隨便寫的", "再合不出人，我就要滅世囉", "看！有流星！騙你的", "別讓我的實驗室爆炸",
+        "我是不是該去放個假？", "這隻長得有點像我前任...", "再合一下，就一下！", "你的手指累了嗎？",
+        "這就是生命的奇蹟 (哈欠)"
+    ];
 
     function startGodIdle() {
         clearInterval(godIdleInterval);
-        godIdleInterval = setInterval(() => { if(!isAnimating) playGodSequence(godStates.random, 200); }, 4000);
+        // 頻率加快：3000ms 檢查一次，60% 機率說話
+        godIdleInterval = setInterval(() => { 
+            if(!isAnimating) {
+                playGodSequence(godStates.random, 200); 
+                if(Math.random() > 0.4) showGodDialog(godQuotes[Math.floor(Math.random()*godQuotes.length)]);
+            }
+        }, 3000);
     }
     function stopGodIdle() { clearInterval(godIdleInterval); }
 
@@ -124,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let board = [], frozenTurns = [], score = 0, moves = 0, maxTile = 2;
     let prevBoard = null;
     let isSelectingIce = false;
+    let undoCooldown = 0;
 
     document.getElementById('btn-normal').addEventListener('click', () => {
         document.getElementById('start-screen').classList.remove('active');
@@ -196,8 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initBoard() {
         board = Array(16).fill(0); frozenTurns = Array(16).fill(0);
         score = 0; moves = gameMode === 'normal' ? 1000 : 0; maxTile = 2;
-        prevBoard = null; isSelectingIce = false;
-        document.getElementById('skill-instruction').classList.add('hidden');
+        prevBoard = null; isSelectingIce = false; undoCooldown = 0;
         updateAchievementList(); updateEvolutionBook();
         addNewTile(); addNewTile(); updateUI();
         godChar.src = godStates.idle;
@@ -245,6 +264,17 @@ document.addEventListener('DOMContentLoaded', () => {
             t.addEventListener('click', () => handleTileClick(i));
             grid.appendChild(t);
         });
+        
+        // 更新 Undo 冷卻
+        const cdUndo = document.getElementById('cd-undo');
+        if(cdUndo) {
+            if(undoCooldown > 0) {
+                cdUndo.classList.remove('hidden');
+                cdUndo.innerText = undoCooldown;
+            } else {
+                cdUndo.classList.add('hidden');
+            }
+        }
         updateAchievementList();
     }
 
@@ -256,67 +286,82 @@ document.addEventListener('DOMContentLoaded', () => {
     function showGodDialog(msg) {
         const d = document.getElementById('god-dialog');
         d.innerText = msg; d.classList.remove('hidden');
-        setTimeout(()=>d.classList.add('hidden'), 1500);
+        setTimeout(()=>d.classList.add('hidden'), 2000); // 稍微久一點
     }
-    function addSkillOverlay(idx, imgName) {
+    // 龍捲風 2.5s 閃爍
+    function addSkillOverlay(idx, imgName, duration = 800, className = '') {
         const fxLayer = document.getElementById('fx-layer');
         const row = Math.floor(idx / 4), col = idx % 4;
         const fx = document.createElement('div');
-        fx.className = 'skill-overlay';
+        fx.className = `skill-overlay ${className}`;
         fx.style.backgroundImage = `url('images/04_game/${imgName}')`;
         fx.style.top = (row * (116 + 8)) + 'px';
         fx.style.left = (col * (116 + 8)) + 'px';
         fxLayer.appendChild(fx);
-        setTimeout(() => fx.remove(), 800);
+        setTimeout(() => fx.remove(), duration);
     }
 
     document.getElementById('skill-undo').onclick = () => {
-        if(!prevBoard || score < 300) { showGodDialog("不足(-300)"); return; }
-        score -= 300; board = [...prevBoard]; updateUI(); showScoreEffect(300);
+        if(undoCooldown > 0) return showGodDialog(`冷卻中(${undoCooldown})`);
+        if(!prevBoard || score < 300) return showGodDialog("分數不足");
+        score -= 300; board = [...prevBoard]; undoCooldown = 10;
+        playSfx(sfxTime); updateUI(); showScoreEffect(300); showGodDialog("時光倒流！");
     };
+
     document.getElementById('skill-wave').onclick = () => {
-        if(score < 500) return showGodDialog("不足(-500)");
-        playSfx(sfxSkill); score -= 500;
-        [0,1,4,5, 10,11,14,15].forEach(i => { if(board[i]>0) { board[i]=0; addSkillOverlay(i, 'wave_block.png'); } });
+        if(score < 500) return showGodDialog("分數不足");
+        playSfx(sfxWave); score -= 500;
+        [0,1,4,5, 10,11,14,15].forEach(i => { if(board[i]>0 && frozenTurns[i]===0) { board[i]=0; addSkillOverlay(i, 'wave_block.png'); } });
         updateUI(); showScoreEffect(500);
     };
     document.getElementById('skill-volcano').onclick = () => {
-        if(score < 500) return showGodDialog("不足(-500)");
-        playSfx(sfxSkill); score -= 500;
-        [2,3,6,7, 8,9,12,13].forEach(i => { if(board[i]>0) { board[i]=0; addSkillOverlay(i, 'explode2.png'); } });
+        if(score < 500) return showGodDialog("分數不足");
+        playSfx(sfxExplode); score -= 500;
+        [2,3,6,7, 8,9,12,13].forEach(i => { if(board[i]>0 && frozenTurns[i]===0) { board[i]=0; addSkillOverlay(i, 'explode2.png'); } });
         updateUI(); showScoreEffect(500);
     };
     document.getElementById('skill-lightning').onclick = () => {
-        if(score < 1000) return showGodDialog("不足(-1000)");
-        const filled = board.map((v,i)=>v>0?i:-1).filter(i=>i!==-1);
-        if(!filled.length) return;
-        playSfx(sfxSkill); score -= 1000;
+        if(score < 1000) return showGodDialog("分數不足");
+        const filled = board.map((v,i)=>(v>0 && frozenTurns[i]===0)?i:-1).filter(i=>i!==-1);
+        if(!filled.length) return showGodDialog("無目標");
+        playSfx(sfxThunder); score -= 1000;
         const target = filled[Math.floor(Math.random()*filled.length)];
         board[target] = 0; addSkillOverlay(target, 'lightning_block.png');
         updateUI(); showScoreEffect(1000);
     };
+
     document.getElementById('skill-typhoon').onclick = () => {
-        if(score < 1000) return showGodDialog("不足(-1000)");
-        playSfx(sfxSkill); score -= 1000;
-        for(let i = board.length - 1; i > 0; i--){
-            const j = Math.floor(Math.random() * (i + 1));
-            [board[i], board[j]] = [board[j], board[i]];
-            [frozenTurns[i], frozenTurns[j]] = [frozenTurns[j], frozenTurns[i]];
+        if(score < 1000) return showGodDialog("分數不足");
+        playSfx(sfxTornado); score -= 1000;
+        
+        let movableIndices = [], movableValues = [];
+        for(let i=0; i<16; i++) {
+            if(frozenTurns[i] === 0) { movableIndices.push(i); movableValues.push(board[i]); }
         }
-        for(let i=0; i<16; i++) addSkillOverlay(i, 'typhoon_block.png');
+        // Shuffle
+        for(let i = movableValues.length - 1; i > 0; i--){
+            const j = Math.floor(Math.random() * (i + 1));
+            [movableValues[i], movableValues[j]] = [movableValues[j], movableValues[i]];
+        }
+        // Apply
+        movableIndices.forEach((idx, k) => { 
+            board[idx] = movableValues[k]; 
+            // [修正] 龍捲風特效持續 2500ms，並加上 spin class
+            addSkillOverlay(idx, 'typhoon_block.png', 2500, 'tornado-spin');
+        });
         updateUI(); showScoreEffect(1000);
     };
+
     document.getElementById('skill-ice').onclick = () => {
-        if(score < 2000) return showGodDialog("不足(-2000)");
+        if(score < 2000) return showGodDialog("分數不足");
         isSelectingIce = true;
-        document.getElementById('skill-instruction').classList.remove('hidden');
+        showGodDialog("請點擊目標");
     };
     function handleTileClick(index) {
         if (isSelectingIce) {
             if (board[index] > 0) {
                 score -= 2000; frozenTurns[index] = 11; isSelectingIce = false;
-                document.getElementById('skill-instruction').classList.add('hidden');
-                playSfx(sfxSkill); updateUI(); showScoreEffect(2000);
+                playSfx(sfxFrozen); updateUI(); showScoreEffect(2000);
             } else { showGodDialog("請選擇生物"); }
         }
     }
@@ -325,15 +370,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!modalComplete.classList.contains('hidden') || !modalGameOver.classList.contains('hidden') || isSelectingIce) return;
         if(!modalAchieve.classList.contains('hidden') || !modalHelp.classList.contains('hidden') || !modalIntro.classList.contains('hidden') || !modalTarget.classList.contains('hidden')) return;
 
-        prevBoard = [...board];
-        
+        let tempPrevBoard = [...board];
         for(let i=0; i<16; i++) if(frozenTurns[i] > 0) frozenTurns[i]--;
+        if(undoCooldown > 0) undoCooldown--;
 
         let moved = false;
         let scoreAdd = 0;
         let newBoard = [...board];
         let mergedObj = {};
-
         const idx = (r, c) => r * 4 + c;
 
         if (dir === 'left') {
@@ -343,20 +387,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         let p = c;
                         while (p > 0) {
                             if(frozenTurns[idx(r, p)] > 0 || frozenTurns[idx(r, p-1)] > 0) break;
-                            let curr = idx(r, p);
-                            let prev = idx(r, p-1);
+                            let curr = idx(r, p), prev = idx(r, p-1);
                             if (newBoard[prev] === 0) {
-                                newBoard[prev] = newBoard[curr];
-                                newBoard[curr] = 0;
-                                moved = true;
-                                p--;
+                                newBoard[prev] = newBoard[curr]; newBoard[curr] = 0; moved = true; p--;
                             } else if (newBoard[prev] === newBoard[curr] && !mergedObj[prev]) {
-                                newBoard[prev] *= 2;
-                                newBoard[curr] = 0;
-                                mergedObj[prev] = true;
-                                scoreAdd += newBoard[prev];
-                                moved = true;
-                                break;
+                                newBoard[prev] *= 2; newBoard[curr] = 0; mergedObj[prev] = true; scoreAdd += newBoard[prev]; moved = true; break;
                             } else break;
                         }
                     }
@@ -369,20 +404,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         let p = c;
                         while (p < 3) {
                             if(frozenTurns[idx(r, p)] > 0 || frozenTurns[idx(r, p+1)] > 0) break;
-                            let curr = idx(r, p);
-                            let next = idx(r, p+1);
+                            let curr = idx(r, p), next = idx(r, p+1);
                             if (newBoard[next] === 0) {
-                                newBoard[next] = newBoard[curr];
-                                newBoard[curr] = 0;
-                                moved = true;
-                                p++;
+                                newBoard[next] = newBoard[curr]; newBoard[curr] = 0; moved = true; p++;
                             } else if (newBoard[next] === newBoard[curr] && !mergedObj[next]) {
-                                newBoard[next] *= 2;
-                                newBoard[curr] = 0;
-                                mergedObj[next] = true;
-                                scoreAdd += newBoard[next];
-                                moved = true;
-                                break;
+                                newBoard[next] *= 2; newBoard[curr] = 0; mergedObj[next] = true; scoreAdd += newBoard[next]; moved = true; break;
                             } else break;
                         }
                     }
@@ -395,20 +421,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         let p = r;
                         while (p > 0) {
                             if(frozenTurns[idx(p, c)] > 0 || frozenTurns[idx(p-1, c)] > 0) break;
-                            let curr = idx(p, c);
-                            let prev = idx(p-1, c);
+                            let curr = idx(p, c), prev = idx(p-1, c);
                             if (newBoard[prev] === 0) {
-                                newBoard[prev] = newBoard[curr];
-                                newBoard[curr] = 0;
-                                moved = true;
-                                p--;
+                                newBoard[prev] = newBoard[curr]; newBoard[curr] = 0; moved = true; p--;
                             } else if (newBoard[prev] === newBoard[curr] && !mergedObj[prev]) {
-                                newBoard[prev] *= 2;
-                                newBoard[curr] = 0;
-                                mergedObj[prev] = true;
-                                scoreAdd += newBoard[prev];
-                                moved = true;
-                                break;
+                                newBoard[prev] *= 2; newBoard[curr] = 0; mergedObj[prev] = true; scoreAdd += newBoard[prev]; moved = true; break;
                             } else break;
                         }
                     }
@@ -421,20 +438,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         let p = r;
                         while (p < 3) {
                             if(frozenTurns[idx(p, c)] > 0 || frozenTurns[idx(p+1, c)] > 0) break;
-                            let curr = idx(p, c);
-                            let next = idx(p+1, c);
+                            let curr = idx(p, c), next = idx(p+1, c);
                             if (newBoard[next] === 0) {
-                                newBoard[next] = newBoard[curr];
-                                newBoard[curr] = 0;
-                                moved = true;
-                                p++;
+                                newBoard[next] = newBoard[curr]; newBoard[curr] = 0; moved = true; p++;
                             } else if (newBoard[next] === newBoard[curr] && !mergedObj[next]) {
-                                newBoard[next] *= 2;
-                                newBoard[curr] = 0;
-                                mergedObj[next] = true;
-                                scoreAdd += newBoard[next];
-                                moved = true;
-                                break;
+                                newBoard[next] *= 2; newBoard[curr] = 0; mergedObj[next] = true; scoreAdd += newBoard[next]; moved = true; break;
                             } else break;
                         }
                     }
@@ -443,6 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (moved) {
+            prevBoard = tempPrevBoard;
             board = newBoard;
             score += scoreAdd;
             if(scoreAdd > 0) playSfx(sfxMerge);
@@ -486,11 +495,11 @@ document.addEventListener('DOMContentLoaded', () => {
             modalComplete.classList.remove('hidden');
             document.getElementById('complete-creature').src = tileImages[maxTile];
             playSfx(sfxWin); startConfetti();
-            playGodSequence(godStates.victory);
+            playGodSequence(godStates.victory, 500);
         } else {
             modalGameOver.classList.remove('hidden');
             playSfx(sfxFail);
-            playGodSequence(godStates.fail);
+            playGodSequence(godStates.fail, 500);
         }
     }
 
@@ -550,10 +559,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateAchievementList() {
         const list = document.getElementById('achievement-list-container');
         if(!list) return; list.innerHTML = '';
-        const achs = [{t:"生命的火花",d:"合成單細胞",g:2},{t:"陸地霸主",d:"演化出恐龍",g:64},{t:"智慧曙光",d:"演化出野人",g:1024},{t:"機械飛昇",d:"成為生化人",g:32768},{t:"創世之神",d:"達到頂點",g:131072}];
+        const achs = [
+            {t:"黏糊糊的開始", d:"把一鍋熱湯變成了單細胞。小心別把它喝掉了！", g:2},
+            {t:"隕石磁鐵", d:"演化出恐龍。希望能撐過下一次流星雨。", g:64},
+            {t:"終於穿褲子了", d:"演化出原始人。雖然只有一塊布，但也是進步。", g:1024},
+            {t:"電池充飽沒？", d:"成為生化人。現在你有 50% 的機率會生鏽。", g:32768},
+            {t:"老闆好！", d:"達到演化的頂點。恭喜！你可以去創造自己的宇宙了。", g:131072}
+        ];
         achs.forEach(a => {
             const done = maxTileEver >= a.g; 
             const cls = done ? 'ach-item completed' : 'ach-item';
+            // [修正] 未達成使用 n-.png
             const icon = done ? tileImages[a.g] : 'images/03_evolution/n-.png';
             const st = done ? 'images/02_achievement/ach_finish_img.png' : 'images/02_achievement/ach_img.png';
             list.innerHTML += `<div class="${cls}"><div class="ach-col-icon"><img src="${icon}"></div><div class="ach-col-title">${a.t}</div><div class="ach-col-desc">${a.d}</div><div class="ach-col-status"><img src="${st}"></div></div>`;
