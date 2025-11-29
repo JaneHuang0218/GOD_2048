@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- 音效區 -->
+    <!-- 音效資源 -->
     <audio id="bg-music" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-click"><source src="audio/click.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-merge"><source src="audio/merge.mp3" type="audio/mpeg"></audio>
@@ -16,25 +16,27 @@
     <audio id="sfx-win"><source src="audio/win.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-fail"><source src="audio/fail.mp3" type="audio/mpeg"></audio>
 
-    <!-- 全域 UI (右上角) -->
-    <div id="global-icons" class="lobby-icons">
-        <button id="btn-open-achievement" class="icon-btn hover-effect">
-            <img src="images/01_lobby/achieve.png" alt="成就">
-        </button>
-        <button id="btn-open-intro" class="icon-btn hover-effect">
-            <img src="images/01_lobby/question.png" onerror="this.src='images/01_lobby/help.png'" alt="說明">
-        </button>
-        <button id="btn-open-help" class="icon-btn hover-effect">
-            <img src="images/01_lobby/help.png" alt="圖鑑">
-        </button>
-        <button id="btn-toggle-sound" class="icon-btn hover-effect">
-            <img id="img-sound" src="images/01_lobby/btn_sound_on.png" alt="聲音">
-        </button>
-    </div>
-
+    <!-- 縮放容器 -->
     <div id="game-scale-wrapper">
+        <!-- 遊戲核心畫布 (1386x640) -->
         <div id="game-container">
             
+            <!-- ★ [全域按鈕] 絕對定位在畫布右上角 ★ -->
+            <div id="global-icons" class="lobby-icons">
+                <button id="btn-open-achievement" class="icon-btn hover-effect">
+                    <img src="images/01_lobby/achieve.png" alt="成就">
+                </button>
+                <button id="btn-open-intro" class="icon-btn hover-effect">
+                    <img src="images/01_lobby/question.png" onerror="this.src='images/01_lobby/help.png'" alt="說明">
+                </button>
+                <button id="btn-open-help" class="icon-btn hover-effect">
+                    <img src="images/01_lobby/help.png" alt="圖鑑">
+                </button>
+                <button id="btn-toggle-sound" class="icon-btn hover-effect">
+                    <img id="img-sound" src="images/01_lobby/btn_sound_on.png" alt="聲音">
+                </button>
+            </div>
+
             <!-- 1. 大廳 -->
             <div id="start-screen" class="screen active">
                 <div class="full-bg" style="background-image: url('images/01_lobby/logo_bg.png');"></div>
@@ -67,11 +69,12 @@
             <div id="game-screen" class="screen">
                 <div class="full-bg" style="background-image: url('images/04_game/game_bg.jpg');"></div>
                 
-                <!-- ★ [修正] 左上角回首頁按鈕圖片 ★ -->
+                <!-- 左上角回首頁 -->
                 <button id="btn-back-home-top" class="top-left-back hover-effect">
                     <img src="images/01_lobby/back.png" onerror="this.src='images/04_game/menu.png'">
                 </button>
 
+                <!-- 遊戲佈局 -->
                 <div class="game-layout-inner">
                     <!-- 左側：棋盤 -->
                     <div class="playfield-area">
@@ -83,6 +86,7 @@
 
                     <!-- 右側：UI 面板 -->
                     <div class="sidebar-area">
+                        <!-- 上帝 -->
                         <div class="god-wrapper">
                             <div id="god-dialog" class="god-dialog hidden">加油！</div>
                             <div class="god-container">
@@ -90,6 +94,7 @@
                             </div>
                         </div>
                         
+                        <!-- 數據看板 -->
                         <div class="info-group">
                             <div class="stat-box" style="background-image: url('images/04_game/action_step.png');">
                                 <span id="moves-display">∞</span>
@@ -153,8 +158,8 @@
                     <div class="page-right"><div id="evo-grid-right" class="book-grid-layout"></div></div>
                 </div>
             </div>
-
-            <!-- 說明 (Question) -->
+            
+            <!-- 玩法說明 -->
             <div id="modal-intro" class="modal-overlay hidden">
                 <div class="popup-container" style="width: 817px; height: 556px;">
                     <img src="images/question/question_bg.png" class="popup-bg" onerror="this.src='images/02_achievement/rank_bg.png'">

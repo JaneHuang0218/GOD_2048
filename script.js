@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if(btnToggleSound) btnToggleSound.addEventListener('click', toggleSoundState);
 
-    // UI
     const globalIcons = document.getElementById('global-icons');
     const modalAchieve = document.getElementById('modal-achievement');
     const modalHelp = document.getElementById('modal-help');
@@ -82,12 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startGodIdle() {
         clearInterval(godIdleInterval);
-        // 一般隨機動作維持 200ms
         godIdleInterval = setInterval(() => { if(!isAnimating) playGodSequence(godStates.random, 200); }, 4000);
     }
     function stopGodIdle() { clearInterval(godIdleInterval); }
 
-    // [修正] 增加 speed 參數，預設 200
     function playGodSequence(seqArr, speed = 200) {
         if(!godChar) return;
         isAnimating = true;
@@ -96,21 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if(frame < seqArr.length) {
                 godChar.src = seqArr[frame];
                 frame++;
-                godAnimTimer = setTimeout(nextFrame, speed); // 使用變數速度
+                godAnimTimer = setTimeout(nextFrame, speed);
             } else {
-                // 循環播放邏輯：檢查視窗是否開啟，並維持同樣速度
-                if(!modalGameOver.classList.contains('hidden')) {
-                    frame = 0; 
-                    playGodSequence(godStates.fail, 500); // 循環播放失敗動畫 (慢)
-                }
-                else if(!modalComplete.classList.contains('hidden')) {
-                    frame = 0;
-                    playGodSequence(godStates.victory, 500); // 循環播放勝利動畫 (慢)
-                }
-                else {
-                    godChar.src = godStates.idle;
-                    isAnimating = false;
-                }
+                if(!modalGameOver.classList.contains('hidden')) { frame = 0; playGodSequence(godStates.fail, 500); }
+                else if(!modalComplete.classList.contains('hidden')) { frame = 0; playGodSequence(godStates.victory, 500); }
+                else { godChar.src = godStates.idle; isAnimating = false; }
             }
         }
         nextFrame();
@@ -462,8 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             addNewTile();
             updateUI();
-            if (maxTile > 2) playGodSequence(godStates.newEl, 200); 
-            else playGodSequence(godStates.random, 200);
+            if (maxTile > 2) playGodSequence(godStates.newEl); else playGodSequence(godStates.random);
 
             Object.keys(mergedObj).forEach(index => {
                 const tile = document.querySelector(`.tile[data-index="${index}"] .tile-inner`);
@@ -500,13 +486,11 @@ document.addEventListener('DOMContentLoaded', () => {
             modalComplete.classList.remove('hidden');
             document.getElementById('complete-creature').src = tileImages[maxTile];
             playSfx(sfxWin); startConfetti();
-            // ★ [修正] 勝利動畫變慢
-            playGodSequence(godStates.victory, 500); 
+            playGodSequence(godStates.victory);
         } else {
             modalGameOver.classList.remove('hidden');
             playSfx(sfxFail);
-            // ★ [修正] 失敗動畫變慢
-            playGodSequence(godStates.fail, 500);
+            playGodSequence(godStates.fail);
         }
     }
 
