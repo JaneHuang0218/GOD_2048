@@ -11,27 +11,30 @@
     <!-- 音效區 -->
     <audio id="bg-music" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-click"><source src="audio/click.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-merge"><source src="audio/merge.mp3" type="audio/mpeg"></audio> <!-- 合併音效 (選配) -->
-    <audio id="sfx-volcano"><source src="audio/explode.mp3" type="audio/mpeg"></audio> <!-- 火山音效 (選配) -->
-    <audio id="sfx-fail"><source src="audio/fail.mp3" type="audio/mpeg"></audio>       <!-- 失敗音效 (選配) -->
-    <audio id="sfx-win"><source src="audio/win.mp3" type="audio/mpeg"></audio>         <!-- 勝利音效 (選配) -->
+    <audio id="sfx-merge"><source src="audio/merge.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-skill"><source src="audio/explode.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-win"><source src="audio/win.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-fail"><source src="audio/fail.mp3" type="audio/mpeg"></audio>
+
+    <!-- 全域 UI (右上角) -->
+    <div id="global-icons" class="lobby-icons">
+        <button id="btn-open-achievement" class="icon-btn hover-effect">
+            <img src="images/01_lobby/achieve.png" alt="成就">
+        </button>
+        <button id="btn-open-intro" class="icon-btn hover-effect">
+            <img src="images/01_lobby/question.png" onerror="this.src='images/01_lobby/help.png'" alt="說明">
+        </button>
+        <button id="btn-open-help" class="icon-btn hover-effect">
+            <img src="images/01_lobby/help.png" alt="圖鑑">
+        </button>
+        <button id="btn-toggle-sound" class="icon-btn hover-effect">
+            <img id="img-sound" src="images/01_lobby/btn_sound_on.png" alt="聲音">
+        </button>
+    </div>
 
     <div id="game-scale-wrapper">
         <div id="game-container">
             
-            <!-- 全域 UI (右上角：成就、圖鑑、聲音) -->
-            <div id="global-icons" class="lobby-icons">
-                <button id="btn-open-achievement" class="icon-btn hover-effect">
-                    <img src="images/01_lobby/achieve.png">
-                </button>
-                <button id="btn-open-help" class="icon-btn hover-effect">
-                    <img src="images/01_lobby/help.png">
-                </button>
-                <button id="btn-toggle-sound" class="icon-btn hover-effect">
-                    <img id="img-sound" src="images/01_lobby/btn_sound_on.png">
-                </button>
-            </div>
-
             <!-- 1. 大廳 -->
             <div id="start-screen" class="screen active">
                 <div class="full-bg" style="background-image: url('images/01_lobby/logo_bg.png');"></div>
@@ -63,19 +66,23 @@
             <!-- 2. 遊戲中 -->
             <div id="game-screen" class="screen">
                 <div class="full-bg" style="background-image: url('images/04_game/game_bg.jpg');"></div>
+                
+                <!-- ★ [修正] 左上角回首頁按鈕圖片 ★ -->
+                <button id="btn-back-home-top" class="top-left-back hover-effect">
+                    <img src="images/01_lobby/back.png" onerror="this.src='images/04_game/menu.png'">
+                </button>
+
                 <div class="game-layout-inner">
-                    
                     <!-- 左側：棋盤 -->
                     <div class="playfield-area">
                         <div class="playfield-bg">
                             <div class="grid-container" id="grid-container"></div>
-                            <div id="explosion-layer"></div>
+                            <div id="fx-layer"></div>
                         </div>
                     </div>
 
                     <!-- 右側：UI 面板 -->
                     <div class="sidebar-area">
-                        <!-- 上帝 -->
                         <div class="god-wrapper">
                             <div id="god-dialog" class="god-dialog hidden">加油！</div>
                             <div class="god-container">
@@ -83,7 +90,6 @@
                             </div>
                         </div>
                         
-                        <!-- 數據看板 -->
                         <div class="info-group">
                             <div class="stat-box" style="background-image: url('images/04_game/action_step.png');">
                                 <span id="moves-display">∞</span>
@@ -94,19 +100,35 @@
                             </div>
                         </div>
 
-                        <!-- 技能按鈕 (下方三個) -->
-                        <div class="bottom-skills">
-                            <button class="skill-btn hover-effect" id="btn-back-home">
-                                <img src="images/04_game/menu.png">
-                            </button>
-                            <button class="skill-btn hover-effect" id="btn-undo">
-                                <img src="images/04_game/hourglass.png" alt="Undo" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-size:30px\'>↺</span><span class=\'skill-cost\'>-100</span>'">
-                                <span class="skill-cost">-100</span>
-                            </button>
-                            <button class="skill-btn hover-effect" id="btn-volcano">
-                                <img src="images/04_game/explode.png" alt="Boom" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-size:30px\'>🌋</span><span class=\'skill-cost\'>-500</span>'">
-                                <span class="skill-cost">-500</span>
-                            </button>
+                        <!-- 技能按鈕 -->
+                        <div class="skills-wrapper">
+                            <div class="bottom-skills-grid">
+                                <button class="skill-btn hover-effect" id="skill-undo">
+                                    <img src="images/04_game/hourglass.png">
+                                    <span class="skill-cost">-300</span>
+                                </button>
+                                <button class="skill-btn hover-effect" id="skill-wave">
+                                    <img src="images/04_game/wave.png">
+                                    <span class="skill-cost">-500</span>
+                                </button>
+                                <button class="skill-btn hover-effect" id="skill-volcano">
+                                    <img src="images/04_game/explode.png">
+                                    <span class="skill-cost">-500</span>
+                                </button>
+                                <button class="skill-btn hover-effect" id="skill-lightning">
+                                    <img src="images/04_game/lightning.png">
+                                    <span class="skill-cost">-1000</span>
+                                </button>
+                                <button class="skill-btn hover-effect" id="skill-typhoon">
+                                    <img src="images/04_game/typhoon.png">
+                                    <span class="skill-cost">-1000</span>
+                                </button>
+                                <button class="skill-btn hover-effect" id="skill-ice">
+                                    <img src="images/04_game/ice.png">
+                                    <span class="skill-cost red-cost">-2000</span>
+                                </button>
+                            </div>
+                            <div id="skill-instruction" class="hidden">請點擊目標方塊</div>
                         </div>
                     </div>
                 </div>
@@ -132,6 +154,16 @@
                 </div>
             </div>
 
+            <!-- 說明 (Question) -->
+            <div id="modal-intro" class="modal-overlay hidden">
+                <div class="popup-container" style="width: 817px; height: 556px;">
+                    <img src="images/question/question_bg.png" class="popup-bg" onerror="this.src='images/02_achievement/rank_bg.png'">
+                    <button id="btn-close-intro" class="close-btn hover-effect">
+                        <img src="images/02_achievement/btn_close.png">
+                    </button>
+                </div>
+            </div>
+
             <!-- 目標彈窗 -->
             <div id="modal-target" class="modal-overlay hidden">
                 <div class="overlay-dimmer"></div>
@@ -141,7 +173,6 @@
                         <div class="target-icon-box">
                             <img id="target-img" class="shake-anim" src="images/03_evolution/n1024.png">
                         </div>
-                        <!-- 修正：這裡改為兩個按鈕 (Menu, Next/Play) -->
                         <div class="modal-btn-group" style="margin-top: 30px; position: relative; bottom: auto;">
                             <button id="btn-target-menu" class="popup-btn hover-effect">
                                 <img src="images/04_game/menu.png">
@@ -184,7 +215,6 @@
                     </div>
                 </div>
             </div>
-
         </div> 
     </div>
 

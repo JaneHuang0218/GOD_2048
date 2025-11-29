@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. 自動縮放
     function resizeGame() {
         const container = document.getElementById('game-container');
         const scale = Math.min(window.innerWidth / 1386, window.innerHeight / 640);
@@ -9,26 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resizeGame);
     resizeGame();
 
-    // 讀取歷史最高紀錄
     let maxTileEver = parseInt(localStorage.getItem('darwin_max_tile')) || 2;
 
-    // 2. 音樂與音效
     const bgMusic = document.getElementById('bg-music');
     const sfxClick = document.getElementById('sfx-click');
     const sfxMerge = document.getElementById('sfx-merge');
-    const sfxVolcano = document.getElementById('sfx-volcano');
-    const sfxFail = document.getElementById('sfx-fail');
+    const sfxSkill = document.getElementById('sfx-skill');
     const sfxWin = document.getElementById('sfx-win');
+    const sfxFail = document.getElementById('sfx-fail');
     
     const btnToggleSound = document.getElementById('btn-toggle-sound');
     const imgSound = document.getElementById('img-sound');
-    const imgGameSound = document.getElementById('img-game-sound');
     let isSoundOn = true;
 
     function playSfx(audio) { if(isSoundOn && audio) { audio.currentTime=0; audio.play().catch(()=>{}); } }
-
     document.body.addEventListener('click', (e) => {
-        if (e.target.closest('.hover-effect') || e.target.closest('.level-btn-wrap')) playSfx(sfxClick);
+        if (e.target.closest('.hover-effect') || e.target.closest('.level-btn-wrap') || e.target.closest('.skill-btn')) playSfx(sfxClick);
         if(isSoundOn && bgMusic.paused) bgMusic.play().catch(()=>{});
     }, { capture: true });
 
@@ -37,48 +32,44 @@ document.addEventListener('DOMContentLoaded', () => {
         isSoundOn = !isSoundOn;
         const path = isSoundOn ? "images/01_lobby/btn_sound_on.png" : "images/01_lobby/btn_sound_off.png";
         if(imgSound) imgSound.src = path;
-        if(imgGameSound) imgGameSound.src = path;
         if(isSoundOn) bgMusic.play(); else bgMusic.pause();
     }
     if(btnToggleSound) btnToggleSound.addEventListener('click', toggleSoundState);
-    
-    // 3. UI 與 彈窗
+
+    // UI
     const globalIcons = document.getElementById('global-icons');
     const modalAchieve = document.getElementById('modal-achievement');
     const modalHelp = document.getElementById('modal-help');
+    const modalIntro = document.getElementById('modal-intro');
     const modalTarget = document.getElementById('modal-target');
     const levelScreen = document.getElementById('level-select-screen');
     const modalComplete = document.getElementById('modal-complete');
     const modalGameOver = document.getElementById('modal-gameover');
     
-    // 遊戲內按鈕
-    const btnGameSound = document.getElementById('btn-game-sound');
-    if(btnGameSound) btnGameSound.addEventListener('click', toggleSoundState);
-
     let isInGame = false;
 
     function toggleModal(targetModal) {
         const isTargetOpen = !targetModal.classList.contains('hidden');
         modalAchieve.classList.add('hidden');
         modalHelp.classList.add('hidden');
+        modalIntro.classList.add('hidden');
+
         if (!isTargetOpen) {
             targetModal.classList.remove('hidden');
             globalIcons.style.display = 'flex';
         } else {
-            if(isInGame) globalIcons.style.display = 'none';
+            if(isInGame) globalIcons.style.display = 'flex';
             else globalIcons.style.display = 'flex';
         }
     }
 
     document.getElementById('btn-open-achievement').addEventListener('click', () => { updateAchievementList(); toggleModal(modalAchieve); });
     document.getElementById('btn-open-help').addEventListener('click', () => { updateEvolutionBook(); toggleModal(modalHelp); });
-    document.getElementById('btn-close-achievement').addEventListener('click', () => toggleModal(modalAchieve));
+    document.getElementById('btn-open-intro').addEventListener('click', () => toggleModal(modalIntro));
     
-    // 遊戲內按鈕開啟說明
-    const btnGameHelp = document.getElementById('btn-game-help');
-    if(btnGameHelp) btnGameHelp.addEventListener('click', () => { updateEvolutionBook(); toggleModal(modalHelp); });
-
-    // 上帝動畫
+    document.getElementById('btn-close-achievement').addEventListener('click', () => toggleModal(modalAchieve));
+    document.getElementById('btn-close-intro').addEventListener('click', () => toggleModal(modalIntro));
+    
     const godStates = { 
         idle: 'images/04_game/mission.png', 
         random: ['1','2','3','4'].map(i => `images/04_game/alien_random/alien_random${i}.png`),
@@ -91,11 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startGodIdle() {
         clearInterval(godIdleInterval);
-        godIdleInterval = setInterval(() => { if(!isAnimating) playGodSequence(godStates.random); }, 4000);
+        // 一般隨機動作維持 200ms
+        godIdleInterval = setInterval(() => { if(!isAnimating) playGodSequence(godStates.random, 200); }, 4000);
     }
     function stopGodIdle() { clearInterval(godIdleInterval); }
 
-    function playGodSequence(seqArr) {
+    // [修正] 增加 speed 參數，預設 200
+    function playGodSequence(seqArr, speed = 200) {
         if(!godChar) return;
         isAnimating = true;
         let frame = 0;
@@ -103,18 +96,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if(frame < seqArr.length) {
                 godChar.src = seqArr[frame];
                 frame++;
-                godAnimTimer = setTimeout(nextFrame, 200);
+                godAnimTimer = setTimeout(nextFrame, speed); // 使用變數速度
             } else {
-                if(!modalGameOver.classList.contains('hidden')) godChar.src = godStates.fail[3];
-                else if(!modalComplete.classList.contains('hidden')) godChar.src = godStates.victory[3];
-                else godChar.src = godStates.idle;
-                isAnimating = false;
+                // 循環播放邏輯：檢查視窗是否開啟，並維持同樣速度
+                if(!modalGameOver.classList.contains('hidden')) {
+                    frame = 0; 
+                    playGodSequence(godStates.fail, 500); // 循環播放失敗動畫 (慢)
+                }
+                else if(!modalComplete.classList.contains('hidden')) {
+                    frame = 0;
+                    playGodSequence(godStates.victory, 500); // 循環播放勝利動畫 (慢)
+                }
+                else {
+                    godChar.src = godStates.idle;
+                    isAnimating = false;
+                }
             }
         }
         nextFrame();
     }
 
-    // 資料
     const tileImages = {
         2: 'images/03_evolution/n2.png', 4: 'images/03_evolution/n4.png', 8: 'images/03_evolution/n8.png',
         16: 'images/03_evolution/n16.png', 32: 'images/03_evolution/n32.png', 64: 'images/03_evolution/n64.png',
@@ -131,15 +132,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { val: 131072, name: "神" }
     ];
 
-    let maxLevelUnlocked = 1;
-    let currentLevel = 1;
-    let targetTile = 2048;
+    let maxLevelUnlocked = 1, currentLevel = 1, targetTile = 2048;
     let gameMode = 'endless';
-    let board = [], score = 0, moves = 0, maxTile = 2;
+    let board = [], frozenTurns = [], score = 0, moves = 0, maxTile = 2;
     let prevBoard = null;
-    const size = 4;
+    let isSelectingIce = false;
 
-    // 4. 關卡選擇
     document.getElementById('btn-normal').addEventListener('click', () => {
         document.getElementById('start-screen').classList.remove('active');
         levelScreen.classList.add('active');
@@ -166,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
             container.appendChild(btn);
         }
     }
-
     function showTargetPopup(level) {
         currentLevel = level;
         let goal = Math.pow(2, level + 2);
@@ -175,22 +172,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('target-img').src = tileImages[goal];
         modalTarget.classList.remove('hidden');
     }
-
     document.getElementById('btn-target-menu').onclick = () => { modalTarget.classList.add('hidden'); levelScreen.classList.remove('active'); goHome(); };
-    document.getElementById('btn-target-start').onclick = () => {
-        modalTarget.classList.add('hidden');
-        levelScreen.classList.remove('active');
-        startGame('normal', targetTile);
-    };
+    document.getElementById('btn-target-start').onclick = () => { modalTarget.classList.add('hidden'); levelScreen.classList.remove('active'); startGame('normal', targetTile); };
 
-    // 5. 遊戲流程與技能
-    document.getElementById('btn-back-home').onclick = goHome;
+    document.getElementById('btn-back-home-top').onclick = goHome;
     document.getElementById('btn-fail-menu').onclick = goHome;
     document.getElementById('btn-fail-retry').onclick = () => { modalGameOver.classList.add('hidden'); initBoard(); };
     document.getElementById('btn-comp-menu').onclick = goHome;
-    document.getElementById('btn-comp-retry').onclick = () => { 
-        modalComplete.classList.add('hidden'); stopConfetti(); initBoard(); 
-    };
+    document.getElementById('btn-comp-retry').onclick = () => { modalComplete.classList.add('hidden'); stopConfetti(); initBoard(); };
     document.getElementById('btn-comp-next').onclick = () => {
         modalComplete.classList.add('hidden'); stopConfetti();
         if(maxLevelUnlocked < 10) { maxLevelUnlocked++; if(currentLevel < 10) currentLevel++; }
@@ -203,14 +192,13 @@ document.addEventListener('DOMContentLoaded', () => {
         isInGame = true;
         document.getElementById('start-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
-        globalIcons.style.display = 'none';
+        globalIcons.style.display = 'flex'; 
         startGodIdle();
         initBoard();
     }
 
     function goHome() {
-        isInGame = false;
-        stopGodIdle(); stopConfetti();
+        isInGame = false; stopGodIdle(); stopConfetti();
         document.getElementById('game-screen').classList.remove('active');
         document.getElementById('start-screen').classList.add('active');
         modalGameOver.classList.add('hidden');
@@ -219,15 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initBoard() {
-        board = Array(size * size).fill(0);
-        score = 0;
-        moves = gameMode === 'normal' ? 1000 : 0;
-        maxTile = 2;
-        prevBoard = null;
-        updateAchievementList();
-        updateEvolutionBook();
-        addNewTile(); addNewTile();
-        updateUI();
+        board = Array(16).fill(0); frozenTurns = Array(16).fill(0);
+        score = 0; moves = gameMode === 'normal' ? 1000 : 0; maxTile = 2;
+        prevBoard = null; isSelectingIce = false;
+        document.getElementById('skill-instruction').classList.add('hidden');
+        updateAchievementList(); updateEvolutionBook();
+        addNewTile(); addNewTile(); updateUI();
         godChar.src = godStates.idle;
     }
 
@@ -242,111 +227,260 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('moves-display').innerText = gameMode==='normal'?moves:"∞";
         const grid = document.getElementById('grid-container');
         grid.innerHTML = '';
-        board.forEach(v => {
+        
+        const fxLayer = document.getElementById('fx-layer');
+        const keepFx = Array.from(fxLayer.children).filter(el => !el.classList.contains('ice'));
+        fxLayer.innerHTML = '';
+        keepFx.forEach(el => fxLayer.appendChild(el));
+
+        board.forEach((v, i) => {
             const t = document.createElement('div'); t.className = 'tile';
+            t.dataset.index = i;
+            
             if(v>0) {
                 if(v > maxTile) maxTile = v;
-                if(v > maxTileEver) {
-                    maxTileEver = v;
-                    localStorage.setItem('darwin_max_tile', maxTileEver);
-                    updateEvolutionBook();
-                }
-                t.innerHTML = `<div class="tile-inner" style="background-image:url('${tileImages[v]}')"></div>`;
+                if(v > maxTileEver) { maxTileEver = v; localStorage.setItem('darwin_max_tile', maxTileEver); }
+                const inner = document.createElement('div');
+                inner.className = 'tile-inner';
+                inner.style.backgroundImage = `url('${tileImages[v]}')`;
+                t.appendChild(inner);
             }
+            if (frozenTurns[i] > 0) {
+                const ice = document.createElement('div');
+                ice.className = 'skill-overlay ice';
+                ice.style.backgroundImage = "url('images/04_game/ice_block.png')";
+                const row = Math.floor(i / 4), col = i % 4;
+                ice.style.top = (row * (116 + 8)) + 'px';
+                ice.style.left = (col * (116 + 8)) + 'px';
+                ice.innerHTML = `<span class="ice-counter">${frozenTurns[i]}</span>`;
+                fxLayer.appendChild(ice);
+            }
+            t.addEventListener('click', () => handleTileClick(i));
             grid.appendChild(t);
         });
         updateAchievementList();
     }
 
-    // 技能按鈕
-    document.getElementById('btn-undo').onclick = () => {
-        if(!prevBoard || score < 100) { showGodDialog("分數不足或無法後悔"); return; }
-        score -= 100; board = [...prevBoard]; updateUI();
-        showScoreEffect(100);
-    };
-    document.getElementById('btn-volcano').onclick = () => {
-        if(score < 500) { showGodDialog("分數不足 (-500)"); return; }
-        let targets = board.map((v,i)=>(v>0&&v<=8)?i:-1).filter(i=>i!==-1);
-        if(!targets.length) { showGodDialog("無低階生物"); return; }
-        score -= 500; playSfx(sfxVolcano);
-        
-        // 爆炸特效
-        const bg = document.querySelector('.playfield-bg');
-        targets.slice(0, 4).forEach(idx => {
-            let r = Math.floor(Math.random()*targets.length); // 修正隨機邏輯
-        });
-        // 簡單隨機刪除 4 個
-        for(let i=0; i<4; i++) {
-            if(targets.length) {
-                let r = Math.floor(Math.random()*targets.length);
-                let idx = targets[r];
-                let row = Math.floor(idx/4), col = idx%4;
-                
-                const boom = document.createElement('div');
-                boom.className = 'explode-effect';
-                // 計算位置: padding-left + col*(size+gap)
-                boom.style.left = (122 + col*(116+8)) + 'px';
-                boom.style.top = (91 + row*(116+8)) + 'px';
-                bg.appendChild(boom);
-                setTimeout(()=>boom.remove(), 500);
-
-                board[idx] = 0; targets.splice(r, 1);
-            }
-        }
-        showScoreEffect(500);
-        updateUI();
-    };
-
-    function showGodDialog(msg) {
-        const d = document.getElementById('god-dialog');
-        d.innerText = msg; d.classList.remove('hidden');
-        setTimeout(()=>d.classList.add('hidden'), 1500);
-    }
     function showScoreEffect(val) {
         const ef = document.getElementById('score-effect');
         ef.innerText = `-${val}`;
         ef.style.animation='none'; ef.offsetHeight; ef.style.animation='floatUp 1s forwards';
     }
+    function showGodDialog(msg) {
+        const d = document.getElementById('god-dialog');
+        d.innerText = msg; d.classList.remove('hidden');
+        setTimeout(()=>d.classList.add('hidden'), 1500);
+    }
+    function addSkillOverlay(idx, imgName) {
+        const fxLayer = document.getElementById('fx-layer');
+        const row = Math.floor(idx / 4), col = idx % 4;
+        const fx = document.createElement('div');
+        fx.className = 'skill-overlay';
+        fx.style.backgroundImage = `url('images/04_game/${imgName}')`;
+        fx.style.top = (row * (116 + 8)) + 'px';
+        fx.style.left = (col * (116 + 8)) + 'px';
+        fxLayer.appendChild(fx);
+        setTimeout(() => fx.remove(), 800);
+    }
 
-    // 6. 核心移動
-    function move(dir) {
-        if(!modalComplete.classList.contains('hidden') || !modalGameOver.classList.contains('hidden')) return;
-        prevBoard = [...board];
-        let moved = false;
-        let temp = [...board];
-        let currentMax = maxTile;
-        const rotate = (b) => { let n=Array(16).fill(0); for(let r=0;r<4;r++) for(let c=0;c<4;c++) n[c*4+(3-r)] = b[r*4+c]; return n; };
-        let rots = 0;
-        if(dir==='left') rots=2; if(dir==='up') rots=1; if(dir==='down') rots=3;
-        for(let k=0; k<rots; k++) temp = rotate(temp);
-        for(let r=0; r<4; r++) {
-            let row = []; for(let c=0; c<4; c++) row.push(temp[r*4+c]);
-            let fil = row.filter(v=>v);
-            let res = [];
-            for(let k=0; k<fil.length; k++) {
-                if(fil[k]===fil[k+1]) { 
-                    let newVal = fil[k]*2;
-                    res.push(newVal); score+=newVal; playSfx(sfxMerge); k++;
-                    if(newVal > maxTile) maxTile = newVal; 
-                } else res.push(fil[k]);
-            }
-            while(res.length<4) res.unshift(0);
-            for(let c=0; c<4; c++) temp[r*4+c] = res[c];
+    document.getElementById('skill-undo').onclick = () => {
+        if(!prevBoard || score < 300) { showGodDialog("不足(-300)"); return; }
+        score -= 300; board = [...prevBoard]; updateUI(); showScoreEffect(300);
+    };
+    document.getElementById('skill-wave').onclick = () => {
+        if(score < 500) return showGodDialog("不足(-500)");
+        playSfx(sfxSkill); score -= 500;
+        [0,1,4,5, 10,11,14,15].forEach(i => { if(board[i]>0) { board[i]=0; addSkillOverlay(i, 'wave_block.png'); } });
+        updateUI(); showScoreEffect(500);
+    };
+    document.getElementById('skill-volcano').onclick = () => {
+        if(score < 500) return showGodDialog("不足(-500)");
+        playSfx(sfxSkill); score -= 500;
+        [2,3,6,7, 8,9,12,13].forEach(i => { if(board[i]>0) { board[i]=0; addSkillOverlay(i, 'explode2.png'); } });
+        updateUI(); showScoreEffect(500);
+    };
+    document.getElementById('skill-lightning').onclick = () => {
+        if(score < 1000) return showGodDialog("不足(-1000)");
+        const filled = board.map((v,i)=>v>0?i:-1).filter(i=>i!==-1);
+        if(!filled.length) return;
+        playSfx(sfxSkill); score -= 1000;
+        const target = filled[Math.floor(Math.random()*filled.length)];
+        board[target] = 0; addSkillOverlay(target, 'lightning_block.png');
+        updateUI(); showScoreEffect(1000);
+    };
+    document.getElementById('skill-typhoon').onclick = () => {
+        if(score < 1000) return showGodDialog("不足(-1000)");
+        playSfx(sfxSkill); score -= 1000;
+        for(let i = board.length - 1; i > 0; i--){
+            const j = Math.floor(Math.random() * (i + 1));
+            [board[i], board[j]] = [board[j], board[i]];
+            [frozenTurns[i], frozenTurns[j]] = [frozenTurns[j], frozenTurns[i]];
         }
-        let back = (4-rots)%4; for(let k=0; k<back; k++) temp = rotate(temp);
-        if(JSON.stringify(board)!==JSON.stringify(temp)) { board=temp; moved=true; }
+        for(let i=0; i<16; i++) addSkillOverlay(i, 'typhoon_block.png');
+        updateUI(); showScoreEffect(1000);
+    };
+    document.getElementById('skill-ice').onclick = () => {
+        if(score < 2000) return showGodDialog("不足(-2000)");
+        isSelectingIce = true;
+        document.getElementById('skill-instruction').classList.remove('hidden');
+    };
+    function handleTileClick(index) {
+        if (isSelectingIce) {
+            if (board[index] > 0) {
+                score -= 2000; frozenTurns[index] = 11; isSelectingIce = false;
+                document.getElementById('skill-instruction').classList.add('hidden');
+                playSfx(sfxSkill); updateUI(); showScoreEffect(2000);
+            } else { showGodDialog("請選擇生物"); }
+        }
+    }
 
-        if(moved) {
-            addNewTile(); updateUI();
-            if (maxTile > currentMax) playGodSequence(godStates.newEl);
-            else playGodSequence(godStates.random);
+    function move(dir) {
+        if(!modalComplete.classList.contains('hidden') || !modalGameOver.classList.contains('hidden') || isSelectingIce) return;
+        if(!modalAchieve.classList.contains('hidden') || !modalHelp.classList.contains('hidden') || !modalIntro.classList.contains('hidden') || !modalTarget.classList.contains('hidden')) return;
 
-            if(gameMode==='normal') {
-                moves--; if(moves<=0) showGameOver(false);
+        prevBoard = [...board];
+        
+        for(let i=0; i<16; i++) if(frozenTurns[i] > 0) frozenTurns[i]--;
+
+        let moved = false;
+        let scoreAdd = 0;
+        let newBoard = [...board];
+        let mergedObj = {};
+
+        const idx = (r, c) => r * 4 + c;
+
+        if (dir === 'left') {
+            for (let r = 0; r < 4; r++) {
+                for (let c = 1; c < 4; c++) {
+                    if (newBoard[idx(r,c)] !== 0) {
+                        let p = c;
+                        while (p > 0) {
+                            if(frozenTurns[idx(r, p)] > 0 || frozenTurns[idx(r, p-1)] > 0) break;
+                            let curr = idx(r, p);
+                            let prev = idx(r, p-1);
+                            if (newBoard[prev] === 0) {
+                                newBoard[prev] = newBoard[curr];
+                                newBoard[curr] = 0;
+                                moved = true;
+                                p--;
+                            } else if (newBoard[prev] === newBoard[curr] && !mergedObj[prev]) {
+                                newBoard[prev] *= 2;
+                                newBoard[curr] = 0;
+                                mergedObj[prev] = true;
+                                scoreAdd += newBoard[prev];
+                                moved = true;
+                                break;
+                            } else break;
+                        }
+                    }
+                }
+            }
+        } else if (dir === 'right') {
+            for (let r = 0; r < 4; r++) {
+                for (let c = 2; c >= 0; c--) {
+                    if (newBoard[idx(r,c)] !== 0) {
+                        let p = c;
+                        while (p < 3) {
+                            if(frozenTurns[idx(r, p)] > 0 || frozenTurns[idx(r, p+1)] > 0) break;
+                            let curr = idx(r, p);
+                            let next = idx(r, p+1);
+                            if (newBoard[next] === 0) {
+                                newBoard[next] = newBoard[curr];
+                                newBoard[curr] = 0;
+                                moved = true;
+                                p++;
+                            } else if (newBoard[next] === newBoard[curr] && !mergedObj[next]) {
+                                newBoard[next] *= 2;
+                                newBoard[curr] = 0;
+                                mergedObj[next] = true;
+                                scoreAdd += newBoard[next];
+                                moved = true;
+                                break;
+                            } else break;
+                        }
+                    }
+                }
+            }
+        } else if (dir === 'up') {
+            for (let c = 0; c < 4; c++) {
+                for (let r = 1; r < 4; r++) {
+                    if (newBoard[idx(r,c)] !== 0) {
+                        let p = r;
+                        while (p > 0) {
+                            if(frozenTurns[idx(p, c)] > 0 || frozenTurns[idx(p-1, c)] > 0) break;
+                            let curr = idx(p, c);
+                            let prev = idx(p-1, c);
+                            if (newBoard[prev] === 0) {
+                                newBoard[prev] = newBoard[curr];
+                                newBoard[curr] = 0;
+                                moved = true;
+                                p--;
+                            } else if (newBoard[prev] === newBoard[curr] && !mergedObj[prev]) {
+                                newBoard[prev] *= 2;
+                                newBoard[curr] = 0;
+                                mergedObj[prev] = true;
+                                scoreAdd += newBoard[prev];
+                                moved = true;
+                                break;
+                            } else break;
+                        }
+                    }
+                }
+            }
+        } else if (dir === 'down') {
+            for (let c = 0; c < 4; c++) {
+                for (let r = 2; r >= 0; r--) {
+                    if (newBoard[idx(r,c)] !== 0) {
+                        let p = r;
+                        while (p < 3) {
+                            if(frozenTurns[idx(p, c)] > 0 || frozenTurns[idx(p+1, c)] > 0) break;
+                            let curr = idx(p, c);
+                            let next = idx(p+1, c);
+                            if (newBoard[next] === 0) {
+                                newBoard[next] = newBoard[curr];
+                                newBoard[curr] = 0;
+                                moved = true;
+                                p++;
+                            } else if (newBoard[next] === newBoard[curr] && !mergedObj[next]) {
+                                newBoard[next] *= 2;
+                                newBoard[curr] = 0;
+                                mergedObj[next] = true;
+                                scoreAdd += newBoard[next];
+                                moved = true;
+                                break;
+                            } else break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (moved) {
+            board = newBoard;
+            score += scoreAdd;
+            if(scoreAdd > 0) playSfx(sfxMerge);
+            
+            addNewTile();
+            updateUI();
+            if (maxTile > 2) playGodSequence(godStates.newEl, 200); 
+            else playGodSequence(godStates.random, 200);
+
+            Object.keys(mergedObj).forEach(index => {
+                const tile = document.querySelector(`.tile[data-index="${index}"] .tile-inner`);
+                if(tile) {
+                    tile.classList.remove('merged-anim');
+                    void tile.offsetWidth; 
+                    tile.classList.add('merged-anim');
+                }
+            });
+
+            if(gameMode === 'normal') {
+                moves--;
+                if(moves <= 0) showGameOver(false);
                 if(board.includes(targetTile)) showGameOver(true);
                 else if(checkGameOver()) showGameOver(false);
             } else {
-                 if(checkGameOver()) showGameOver(false);
+                if(checkGameOver()) showGameOver(false);
             }
         }
     }
@@ -366,11 +500,13 @@ document.addEventListener('DOMContentLoaded', () => {
             modalComplete.classList.remove('hidden');
             document.getElementById('complete-creature').src = tileImages[maxTile];
             playSfx(sfxWin); startConfetti();
-            playGodSequence(godStates.victory);
+            // ★ [修正] 勝利動畫變慢
+            playGodSequence(godStates.victory, 500); 
         } else {
             modalGameOver.classList.remove('hidden');
             playSfx(sfxFail);
-            playGodSequence(godStates.fail);
+            // ★ [修正] 失敗動畫變慢
+            playGodSequence(godStates.fail, 500);
         }
     }
 
@@ -391,6 +527,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function stopConfetti() { clearInterval(confettiInterval); }
 
+    document.addEventListener('keydown', e => {
+        if(document.getElementById('game-screen').classList.contains('active')) {
+            if(e.key==='ArrowLeft') move('left'); if(e.key==='ArrowRight') move('right');
+            if(e.key==='ArrowUp') move('up'); if(e.key==='ArrowDown') move('down');
+        }
+    });
+
+    let touchStartX = 0, touchStartY = 0, activeTile = null;
+    const gridEl = document.getElementById('grid-container');
+    if(gridEl) {
+        gridEl.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+            activeTile = e.target.closest('.tile-inner');
+            if(activeTile) activeTile.style.transition = 'none';
+        }, {passive: false});
+        gridEl.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (activeTile) {
+                let dx = e.touches[0].clientX - touchStartX, dy = e.touches[0].clientY - touchStartY;
+                let limit = 20;
+                let tx = Math.max(-limit, Math.min(limit, dx)), ty = Math.max(-limit, Math.min(limit, dy));
+                activeTile.style.transform = `translate(${tx}px, ${ty}px)`;
+            }
+        }, {passive: false});
+        gridEl.addEventListener('touchend', e => {
+            if (activeTile) {
+                activeTile.style.transition = 'transform 0.2s ease-out';
+                activeTile.style.transform = 'translate(0, 0)';
+                activeTile = null;
+            }
+            let dx = e.changedTouches[0].clientX - touchStartX, dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) > Math.abs(dy)) { if (Math.abs(dx) > 30) move(dx > 0 ? 'right' : 'left'); }
+            else { if (Math.abs(dy) > 30) move(dy > 0 ? 'down' : 'up'); }
+        });
+    }
+
     function updateAchievementList() {
         const list = document.getElementById('achievement-list-container');
         if(!list) return; list.innerHTML = '';
@@ -398,16 +570,19 @@ document.addEventListener('DOMContentLoaded', () => {
         achs.forEach(a => {
             const done = maxTileEver >= a.g; 
             const cls = done ? 'ach-item completed' : 'ach-item';
+            const icon = done ? tileImages[a.g] : 'images/03_evolution/n-.png';
             const st = done ? 'images/02_achievement/ach_finish_img.png' : 'images/02_achievement/ach_img.png';
-            list.innerHTML += `<div class="${cls}"><div class="ach-col-icon"><img src="${tileImages[a.g]}"></div><div class="ach-col-title">${a.t}</div><div class="ach-col-desc">${a.d}</div><div class="ach-col-status"><img src="${st}"></div></div>`;
+            list.innerHTML += `<div class="${cls}"><div class="ach-col-icon"><img src="${icon}"></div><div class="ach-col-title">${a.t}</div><div class="ach-col-desc">${a.d}</div><div class="ach-col-status"><img src="${st}"></div></div>`;
         });
     }
     function updateEvolutionBook() {
         const left = document.getElementById('evo-grid-left');
         const right = document.getElementById('evo-grid-right');
         if(!left) return;
-        left.innerHTML = `<div class="book-item title-card"><img src="images/03_evolution/help_txt.png"></div>`;
-        right.innerHTML = '';
+        left.innerHTML = ''; right.innerHTML = '';
+        const titleCard = document.createElement('div'); titleCard.className = 'book-item title-card';
+        titleCard.innerHTML = `<img src="images/03_evolution/help_txt.png">`;
+        left.appendChild(titleCard);
         evolutionData.forEach((item, i) => {
             const unlocked = maxTileEver >= item.val;
             const num = (i+1).toString().padStart(2,'0');
@@ -422,73 +597,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if(i<8) left.appendChild(w); else right.appendChild(w);
         });
     }
-
-    document.addEventListener('keydown', e => {
-        if(document.getElementById('game-screen').classList.contains('active')) {
-            if(e.key==='ArrowLeft') move('left'); if(e.key==='ArrowRight') move('right');
-            if(e.key==='ArrowUp') move('up'); if(e.key==='ArrowDown') move('down');
-        }
-    });
-
-    // ★★★ 手機滑動控制 (單體拖曳特效) ★★★
-    const grid = document.getElementById('grid-container');
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let activeTile = null; // 記錄手指按住的方塊
-
-    if(grid) {
-        // 1. 按下：鎖定該方塊
-        grid.addEventListener('touchstart', e => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            const target = e.target.closest('.tile-inner');
-            if (target) {
-                activeTile = target;
-                activeTile.style.transition = 'none'; // 移除過渡以便跟隨手指
-            }
-        }, {passive: false});
-
-        // 2. 移動：只移動該方塊
-        grid.addEventListener('touchmove', e => {
-            e.preventDefault();
-            if (activeTile) {
-                let dx = e.touches[0].clientX - touchStartX;
-                let dy = e.touches[0].clientY - touchStartY;
-                
-                // 限制最大拉動距離 20px (彈性手感)
-                const limit = 20;
-                let tx = Math.max(-limit, Math.min(limit, dx));
-                let ty = Math.max(-limit, Math.min(limit, dy));
-                
-                activeTile.style.transform = `translate(${tx}px, ${ty}px)`;
-            }
-        }, {passive: false});
-
-        // 3. 放開：彈回並觸發移動
-        grid.addEventListener('touchend', e => {
-            if (activeTile) {
-                activeTile.style.transition = 'transform 0.2s ease-out';
-                activeTile.style.transform = 'translate(0, 0)'; // 歸位
-                activeTile = null;
-            }
-
-            let touchEndX = e.changedTouches[0].clientX;
-            let touchEndY = e.changedTouches[0].clientY;
-            let dx = touchEndX - touchStartX;
-            let dy = touchEndY - touchStartY;
-
-            if (Math.abs(dx) > Math.abs(dy)) {
-                if (Math.abs(dx) > 30) move(dx > 0 ? 'right' : 'left');
-            } else {
-                if (Math.abs(dy) > 30) move(dy > 0 ? 'down' : 'up');
-            }
-        });
-    }
-    
-    // 結算按鈕
-    document.getElementById('btn-modal-close').addEventListener('click', goHome);
-    document.getElementById('btn-modal-retry').addEventListener('click', () => {
-        modalGameOver.classList.add('hidden');
-        initBoard();
-    });
 });

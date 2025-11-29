@@ -11,14 +11,16 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
 
 /* 全域按鈕 */
 .lobby-icons { position: absolute; top: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 10000; pointer-events: auto; }
-.icon-btn { width: 75px; } 
+.icon-btn { width: 75px; }
+.top-left-back { position: absolute; top: 30px; left: 30px; width: 80px; z-index: 10001; pointer-events: auto; }
+.top-left-back img { width: 100%; }
 
 /* 1. 大廳 */
 .lobby-logo { position: absolute; top: 45px; left: 0; right: 0; margin: 0 auto; width: 594px; z-index: 2; animation: float 0.9s infinite ease-in-out; }
 .lobby-buttons { position: absolute; bottom: 120px; left: 0; right: 0; margin: 0 auto; display: flex; justify-content: center; gap: 40px; z-index: 2; width: fit-content; }
 .img-btn { width: 210px; }
 
-/* 1.5 關卡選擇 */
+/* 1.5 關卡 */
 .level-popup { width: 659px; height: 507px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; justify-content: center; align-items: center; }
 .level-bg { position: absolute; width: 100%; height: 100%; z-index: -1; }
 .level-grid-container { width: 560px; height: 240px; margin-top: 80px; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px; }
@@ -31,32 +33,76 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
 
 /* 2. 遊戲 UI */
 .game-layout-inner { position: relative; width: 100%; height: 100%; z-index: 5; display: flex; justify-content: center; align-items: center; gap: 20px; }
+
 .playfield-area { width: 663px; height: 640px; position: relative; flex-shrink: 0; margin-left: 10px; }
-.playfield-bg { width: 100%; height: 100%; background: url('images/04_game/playfield.png') no-repeat center; background-size: 100% 100%; padding-top: 91px; padding-left: 122px; box-sizing: border-box; display: flex; justify-content: flex-start; align-items: flex-start; }
-.grid-container { display: grid; grid-template-columns: repeat(4, 116px); grid-template-rows: repeat(4, 116px); gap: 8px; position: relative; }
+.playfield-bg { width: 100%; height: 100%; background: url('images/04_game/playfield.png') no-repeat center; background-size: 100% 100%; position: relative; }
+.grid-container { position: absolute; top: 91px; left: 122px; display: grid; grid-template-columns: repeat(4, 116px); grid-template-rows: repeat(4, 116px); gap: 8px; z-index: 5; }
+#fx-layer { position: absolute; top: 91px; left: 122px; width: 488px; height: 488px; z-index: 10; pointer-events: none; }
+
 .tile { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
 .tile-inner { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.explode-effect { position: absolute; width: 116px; height: 116px; z-index: 10; pointer-events: none; background-image: url('images/04_game/explode2.png'); background-size: contain; background-repeat: no-repeat; animation: explodeAnim 0.5s forwards; }
+.tile-inner.merged-anim { animation: mergePulse 0.3s ease-out forwards; }
+@keyframes mergePulse { 0% { transform: scale(0.5); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
-.sidebar-area { width: 320px; height: 640px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; }
-.god-wrapper { position: relative; z-index: 2; margin-bottom: 0px; width: 100%; display: flex; justify-content: center; }
-.god-container { width: 280px; height: 200px; display: flex; justify-content: center; align-items: flex-end; }
-#god-character { width: 100%; height: 100%; object-fit: contain; }
+.skill-overlay { position: absolute; width: 116px; height: 116px; background-size: contain; background-repeat: no-repeat; background-position: center; z-index: 20; animation: fadeInOut 0.8s forwards; }
+.skill-overlay.ice { opacity: 0.8; animation: none; }
+.ice-counter { position: absolute; bottom: 2px; right: 2px; color: #fff; font-weight: bold; font-size: 20px; text-shadow: 1px 1px 2px #000; }
+@keyframes fadeInOut { 0% { opacity: 0; transform: scale(1.2); } 20% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+
+/* --- 右側面板調整區 (依照你的修改) --- */
+.sidebar-area { 
+    width: 320px; height: 640px; 
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+    padding-top: 0px; /* 你調整的 */
+}
+
+/* 上帝 */
+.god-wrapper { position: relative; z-index: 2; margin-bottom: 5px; width: 100%; display: flex; justify-content: center; }
+.god-container { 
+    width: 300px; /* 你調整的 */
+    height: 208px; /* 你調整的 */
+    display: flex; justify-content: center; align-items: flex-end; 
+    margin-bottom: -5px; /* 你調整的 */
+}
+#god-character { 
+    width: 100%; height: 100%; 
+    object-fit: contain; 
+    object-position: bottom center; 
+}
 .god-dialog { position: absolute; top: 0px; left: 70%; background: #fff; padding: 8px 15px; border-radius: 15px; border: 3px solid #333; font-weight: bold; color: #333; white-space: nowrap; z-index: 20; opacity: 1; transition: opacity 0.5s; }
 .god-dialog.hidden { opacity: 0; }
 
 /* 分數板 */
-.info-group { display: flex; flex-direction: column; gap: 15px; z-index: 1; margin-bottom: 20px; }
-.stat-box { width: 305px; height: 108px; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; padding-top: 0px; box-sizing: border-box; position: relative; }
-.stat-box span { font-size: 50px; color: #fff; font-weight: 900; font-family: monospace; margin-top: -18px; }
+.info-group { 
+    display: flex; flex-direction: column; 
+    gap: 3px; /* 你調整的 */
+    z-index: 1; 
+    margin-bottom: 2px; /* 你調整的 */
+}
+.stat-box { 
+    width: 305px; height: 108px; background-size: 100% 100%; 
+    display: flex; justify-content: center; align-items: center; 
+    padding: 0; box-sizing: border-box; position: relative; 
+}
+.stat-box span { font-size: 50px; color: #fff; font-weight: 900; font-family: monospace; margin-top: -23px; }
 .score-effect { position: absolute; top: -20px; right: 10px; color: #ff5252; font-weight: bold; font-size: 24px; opacity: 0; z-index: 10; }
 
-.bottom-skills { display: flex; gap: 15px; align-items: flex-end; z-index: 2; margin-left: 10px; }
-.skill-btn { width: 85px; height: 90px; background: none; border: none; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
-.skill-btn img { width: 85px; height: 85px; object-fit: contain; position: absolute; top: 0; }
-.skill-cost { position: relative; z-index: 2; font-size: 14px; color: #fff; font-weight: 900; background: rgba(0,0,0,0.6); padding: 1px 5px; border-radius: 5px; margin-bottom: 2px; }
+/* 技能按鈕區 */
+.skills-wrapper { width: 100%; margin-left: 0px; display: flex; flex-direction: column; align-items: center; }
+#skill-instruction { color: #3ea5bf; font-weight: bold; font-size: 14px; margin-bottom: 5px; background-color: rgba(255,255,255,0.8); padding: 2px 10px; border-radius: 6px; animation: blink 1s infinite; }
 
-/* 3. 成就列表 */
+.bottom-skills-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 90px); /* 你調整的 */
+    grid-template-rows: repeat(2, 90px); 
+    gap: 0px; /* 你調整的 */
+}
+.skill-btn { width: 100%; height: 100%; background: none; border: none; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+.skill-btn img { width: 85%; height: 85%; object-fit: contain; }
+.skill-cost { position: absolute; bottom: 10px; right: 12px; font-size: 15px; color: #fff; font-weight: 900; pointer-events: none; }
+.skill-cost.red-cost { color: #3369e7; }
+
+/* 3. 成就 & 4. 圖鑑 */
 .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 2000; display: flex; justify-content: center; align-items: center; }
 .modal-overlay.hidden { display: none; }
 .overlay-dimmer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: -1; }
@@ -71,62 +117,46 @@ body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100v
 
 .ach-item { width: 566px; height: 92px; margin: 0 auto 10px auto; position: relative; background-image: url('images/02_achievement/ach_bg.png'); background-size: 100% 100%; display: grid; grid-template-columns: 90px 150px 200px 1fr; align-items: center; }
 .ach-col-icon { display: flex; justify-content: center; padding-left: 10px; }
-.ach-col-icon img { width: 70px; height: 70px; object-fit: contain; transform: none; }
+.ach-col-icon img { width: 70px; height: 70px; object-fit: contain; }
 .ach-col-title { font-size: 24px; font-weight: 900; color: #fff; padding-left: 20px; text-align: left; text-shadow: 0 0 2px rgba(0,0,0,0.5); }
 .ach-col-desc { font-size: 14px; line-height: 1.4; color: #eceff1; text-align: left; padding-left: 80px; }
 .ach-col-status { height: 100%; display: flex; justify-content: center; align-items: center; padding-right: 10px; }
 .ach-col-status img { width: auto; height: 60%; object-fit: contain; }
 
-/* 4. 演化圖鑑 */
 .book-container { width: 890px; height: 570px; position: relative; display: flex; justify-content: center; align-items: center; }
 .book-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 .page-left { position: absolute; top: 30px; left: 40px; width: 350px; height: 470px; }
 .page-right { position: absolute; top: 30px; left: 440px; width: 350px; height: 470px; }
 .book-grid-layout { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 6px; height: 100%; align-content: start; }
 .book-item { width: 100%; height: 100%; aspect-ratio: 97 / 128; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-.title-card img { width: 95%; height: auto; filter: contrast(1.2); }
+.title-card img { width: 100%; height: auto; filter: contrast(1.2); }
 .item-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
 .item-creature { position: relative; z-index: 1; width: 85%; height: 65%; object-fit: contain; margin-top: 8px; transition: transform 0.4s; }
 .book-item:hover .item-creature { transform: translateY(-4px) scale(1); }
-.item-info { position: absolute; z-index: 1; bottom: -5px; width: 100%; text-align: center; display: flex; justify-content: center; align-items: center; gap: 12px; }
+.item-info { position: absolute; z-index: 1; bottom: 1px; width: 100%; text-align: center; display: flex; justify-content: center; align-items: baseline; gap: 10px; }
 .num-text { color: #bd8867; font-size: 30px; font-weight: 900; opacity: 0.5; font-family: 'Arial Black', sans-serif; }
 .name-text { color: #795a50; font-size: 20px; font-weight: 900; letter-spacing: 1px; }
 .book-item.locked .item-creature, .book-item.locked .item-info { display: none; }
 
-/* 目標彈窗 */
+/* 5. 目標 & 通關 */
 .target-content-centered { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center; }
 .target-icon-box { width: 140px; height: 140px; margin: 0 auto; display: flex; justify-content: center; align-items: center; }
-.target-icon-box img { width: 100%; height: 100%; object-fit: contain; }
-.shake-anim { animation: shakeRoar 0.2s infinite alternate; transform-origin: center center; }
-@keyframes shakeRoar { 0% { transform: scale(1); } 100% { transform: scale(1.1) rotate(3deg); } }
+.target-icon-box img { width: 100%; height: 100%; object-fit: contain; animation: pop 1s infinite alternate; }
 
-/* 5. 通關與失敗 (按鈕絕對定位修正) */
-.modal-content-small { 
-    width: 425px; height: 420px; 
-    position: relative; 
-    display: flex; justify-content: center; align-items: center;
-}
+.modal-content-small { width: 425px; height: 420px; position: relative; display: flex; justify-content: center; align-items: center; }
 .modal-bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; z-index: 0; }
-
-/* ★ 按鈕群組 (釘在底部) ★ */
-.modal-btn-group { 
-    position: absolute; bottom: 45px; left: 0; width: 100%;
-    display: flex; justify-content: center; gap: 25px; z-index: 10;
-}
+.modal-btn-group { position: absolute; bottom: 45px; left: 0; width: 100%; display: flex; justify-content: center; gap: 25px; z-index: 10; }
 .popup-btn { width: 94px; height: 94px; background: none; border: none; padding: 0; }
 
 .complete-creature-box { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; z-index: 5; }
 .complete-creature-box img { width: 100%; height: 90%; object-fit: contain; animation: bounceFast 0.2s infinite alternate; }
-@keyframes bounceFast { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
-
 .fail-window { width: 425px; height: 391px; }
 .fail-anim-bg { position: absolute; top: -50px; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; display: flex; justify-content: center; align-items: center; }
 .alien-fail-anim { width: 300px; opacity: 0.8; }
-
-/* 彩帶 */
 #confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: hidden; }
 .confetti { position: absolute; width: 16px; height: 12px; animation: fall linear infinite; }
 @keyframes fall { to { transform: translateY(640px) rotate(360deg); } }
-@keyframes explodeAnim { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
-@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
-@keyframes float { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-10px);} }
+@keyframes bounceFast { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
+@keyframes pop { 0% {transform: scale(0.95);} 100% {transform: scale(1.05);} }
+@keyframes float { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-8px);} }
+@keyframes blink { 50% { opacity: 0.5; } }
