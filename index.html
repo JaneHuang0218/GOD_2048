@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- 音效區 -->
+    <!-- 音效 -->
     <audio id="bg-music" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-click"><source src="audio/click.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-merge"><source src="audio/merge.mp3" type="audio/mpeg"></audio>
@@ -24,7 +24,7 @@
     <div id="game-scale-wrapper">
         <div id="game-container">
             
-            <!-- 全域 UI (右上角) -->
+            <!-- 全域 UI -->
             <div id="global-icons" class="lobby-icons">
                 <button id="btn-open-achievement" class="icon-btn hover-effect">
                     <img src="images/01_lobby/achieve.png" alt="成就">
@@ -72,13 +72,11 @@
             <div id="game-screen" class="screen">
                 <div class="full-bg" style="background-image: url('images/04_game/game_bg.jpg');"></div>
                 
-                <!-- 左上角回首頁 -->
                 <button id="btn-back-home-top" class="top-left-back hover-effect">
                     <img src="images/01_lobby/back.png" onerror="this.src='images/04_game/menu.png'">
                 </button>
 
                 <div class="game-layout-inner">
-                    <!-- 左側：棋盤 -->
                     <div class="playfield-area">
                         <div class="playfield-bg">
                             <div class="grid-container" id="grid-container"></div>
@@ -86,10 +84,10 @@
                         </div>
                     </div>
 
-                    <!-- 右側：UI 面板 -->
                     <div class="sidebar-area">
                         <div class="god-wrapper">
-                            <div id="god-dialog" class="god-dialog hidden">加油！</div>
+                            <!-- 對話框 -->
+                            <div id="god-dialog" class="god-dialog hidden"></div>
                             <div class="god-container">
                                 <img src="images/04_game/mission.png" id="god-character">
                             </div>
@@ -110,7 +108,6 @@
                                 <button class="skill-btn hover-effect" id="skill-undo">
                                     <img src="images/04_game/hourglass.png">
                                     <span class="skill-cost">-300</span>
-                                    <!-- 冷卻遮罩 -->
                                     <div id="cd-undo" class="cooldown-mask hidden"></div>
                                 </button>
                                 <button class="skill-btn hover-effect" id="skill-wave">
